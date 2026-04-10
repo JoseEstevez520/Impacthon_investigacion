@@ -16,6 +16,9 @@ export default function SubmitFasta() {
     setSubmitted(false);
 
     try {
+      // Formatear proactivamente por si el usuario inserta " \n " literalmente en vez de un salto real
+      const cleanFasta = fastaContent.replace(/\\n/g, '\n');
+
       // Consumiendo la API Real de Mock del entorno
       const response = await fetch("https://api-mock-cesga.onrender.com/jobs/submit", {
         method: "POST",
@@ -24,18 +27,23 @@ export default function SubmitFasta() {
           "accept": "application/json"
         },
         body: JSON.stringify({
-          fasta_sequence: fastaContent
+          fasta_sequence: cleanFasta,
+          fasta_filename: "sequence.fasta"
         })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || "Error desconocido al procesar la secuencia");
+        let errorMsg = "Error desconocido al procesar la secuencia";
+        if (data.detail) {
+          errorMsg = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
+        }
+        throw new Error(errorMsg);
       }
 
       // Extraer nombre del FASTA si lo tiene (>nombre...)
-      const lines = fastaContent.split('\n');
+      const lines = cleanFasta.split('\n');
       let name = "Secuencia Nueva";
       if (lines[0].startsWith('>')) {
         name = lines[0].substring(1, 30) + (lines[0].length > 30 ? "..." : "");
