@@ -72,12 +72,17 @@ export default function JobsFilterPanel({
   const hasActiveFilters = selectedProjects.length > 0 || selectedCategories.length > 0 || maxLength || textSearch;
 
   const projectOptions = useMemo(() => {
-    const projects = availableProjects.map(p => p.name);
-    return ["__no_project__", ...projects];
+    // Array de IDs (no nombres, porque necesitamos IDs para el filtro)
+    return [
+      "__no_project__",
+      ...availableProjects.map(p => p.id)
+    ];
   }, [availableProjects]);
 
   const formatProjectLabel = (value) => {
-    return value === "__no_project__" ? "Sin proyecto" : value;
+    if (value === "__no_project__") return "Sin proyecto";
+    const project = availableProjects.find(p => p.id === value);
+    return project?.name || value;
   };
 
   return (
