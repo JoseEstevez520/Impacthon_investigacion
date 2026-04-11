@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db, auth } from "../lib/firebase";
 import {
   collection, query, where, onSnapshot, addDoc, updateDoc, doc,
@@ -7,7 +7,7 @@ import {
 import { onAuthStateChanged } from "firebase/auth";
 import {
   Plus, Users, Mail, Check, X, ChevronRight, Dna, Send,
-  FolderOpen, Crown, UserPlus, Clock,
+  FolderOpen, Crown, UserPlus, Clock, Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -86,7 +86,7 @@ function CreateProjectModal({ onClose, onCreated, user }) {
             />
           </div>
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 py-2 text-sm font-medium rounded-md border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            <button type="button" onClick={onClose} className="flex-1 py-2 text-sm font-medium rounded-md border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
               Cancelar
             </button>
             <button
@@ -220,6 +220,11 @@ export default function Projects() {
   const [showCreate,  setShowCreate]  = useState(false);
   const [inviteFor,   setInviteFor]   = useState(null); // project object
 
+  // Filter states
+  const [searchTerm,  setSearchTerm]  = useState("");
+  const [roleFilter,  setRoleFilter]  = useState("all");
+  const [dateFilter,  setDateFilter]  = useState("all");
+
   /* Auth */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -289,6 +294,57 @@ export default function Projects() {
     }
   };
 
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const updateNow = () => setNow(Date.now());
+    const timer = setInterval(updateNow, 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
+
+  /* Filter projects */
+  const filteredProjects = useMemo(() => {
+    let filtered = projects;
+
+    // Search filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(term) ||
+        (p.description && p.description.toLowerCase().includes(term))
+      );
+    }
+
+    // Role filter
+    if (roleFilter !== "all") {
+      filtered = filtered.filter(p => {
+        const userMember = p.members?.find(m => m.uid === user?.uid);
+        if (roleFilter === "owner") {
+          return p.ownerId === user?.uid;
+        } else if (roleFilter === "member") {
+          return userMember && userMember.role !== "owner";
+        }
+        return true;
+      });
+    }
+
+    // Date filter
+    if (dateFilter !== "all") {
+      const timeframes = {
+        week: 7 * 24 * 60 * 60 * 1000,
+        month: 30 * 24 * 60 * 60 * 1000,
+        year: 365 * 24 * 60 * 60 * 1000,
+      };
+      const timeframe = timeframes[dateFilter];
+      filtered = filtered.filter(p => {
+        const createdTime = p.createdAt?.toDate?.()?.getTime() || p._ts;
+        return (now - createdTime) <= timeframe;
+      });
+    }
+
+    return filtered;
+  }, [projects, searchTerm, roleFilter, dateFilter, user, now]);
+
   return (
     <div className="max-w-4xl mx-auto px-5 py-8 w-full">
 
@@ -307,7 +363,7 @@ export default function Projects() {
       {/* Tabs */}
       <div className="flex items-center rounded-md border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-slate-800 mb-4 w-fit">
         {[
-          { key: "projects", label: "Mis proyectos", count: projects.length },
+          { key: "projects", label: "Mis proyectos", count: tab === "projects" ? filteredProjects.length : projects.length },
           { key: "inbox",    label: "Buzón",          count: pendingCount },
         ].map((t) => (
           <button
@@ -339,7 +395,7 @@ export default function Projects() {
       {tab === "projects" && (
         <div className="rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden">
           {/* Column header */}
-          {!loading && projects.length > 0 && (
+          {!loading && filteredProjects.length > 0 && (
             <div className="hidden sm:grid grid-cols-[1fr_120px_120px_80px] items-center px-4 py-2 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <span>Proyecto</span>
               <span>Miembros</span>
@@ -370,14 +426,34 @@ export default function Projects() {
             </div>
           )}
 
-          {!loading && projects.length > 0 && (
+          {!loading && projects.length > 0 && filteredProjects.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-14 px-6 text-center gap-3">
+              <Search className="w-9 h-9 text-slate-300 dark:text-slate-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">No se encontraron proyectos</p>
+                <p className="text-xs text-slate-400 mt-1">Prueba ajustando los filtros de búsqueda.</p>
+              </div>
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setRoleFilter("all");
+                  setDateFilter("all");
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-slate-600 hover:bg-slate-700 text-white transition-colors mt-1"
+              >
+                <X className="w-3.5 h-3.5" /> Limpiar filtros
+              </button>
+            </div>
+          )}
+
+          {!loading && filteredProjects.length > 0 && (
             <ul className="divide-y divide-slate-200 dark:divide-slate-700/60">
-              {projects.map((p) => {
+              {filteredProjects.map((p) => {
                 const isOwner = p.ownerId === user?.uid;
                 return (
                   <li
                     key={p.id}
-                    className="group sm:grid sm:grid-cols-[1fr_120px_120px_80px] items-center gap-2 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    className="group sm:grid sm:grid-cols-[1fr_120px_120px_80px] items-center gap-2 px-4 py-3 bg-white dark:bg-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <FolderOpen className="w-4 h-4 text-slate-400 shrink-0" />
@@ -456,7 +532,7 @@ export default function Projects() {
                   const isPending  = inv.status === "pending";
                   const isAccepted = inv.status === "accepted";
                   return (
-                    <li key={inv.id} className="sm:grid sm:grid-cols-[1fr_140px_100px_120px] items-center gap-2 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <li key={inv.id} className="sm:grid sm:grid-cols-[1fr_140px_100px_120px] items-center gap-2 px-4 py-3 bg-white dark:bg-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <Dna className="w-4 h-4 text-primary-400 shrink-0" />
                         <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{inv.projectName}</p>

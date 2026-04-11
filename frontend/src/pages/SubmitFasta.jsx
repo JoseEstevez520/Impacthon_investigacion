@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { UploadCloud, CheckCircle2, AlertTriangle, FlaskConical, Dna, ArrowRight, FolderOpen } from "lucide-react";
+import { UploadCloud, CheckCircle2, AlertTriangle, FlaskConical, Dna, ArrowRight, FolderOpen, X, ChevronDown } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { db, auth } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from "firebase/firestore";
+import { getJobOutputs } from "../lib/outputsCache";
+import { searchProteins, getProteinDetails, findBestProteinMatch, extractProteinMetadata } from "../api/proteinsApi";
 
 const PROTEIN_SAMPLES = [
   {
@@ -65,6 +67,58 @@ function parseFastaName(header) {
   return raw.length > 60 ? raw.slice(0, 60) + "…" : raw;
 }
 
+
+function enrichJobWhenCompleted(jobId, cesgaJobId, proteinName) {
+  setTimeout(async () => {
+    try {
+      // Opción 1: Buscar en catálogo por nombre (si no se hizo antes)
+      let proteinMatch = null;
+      if (proteinName) {
+        proteinMatch = await findBestProteinMatch(proteinName, null);
+      }
+
+      // Opción 2: Enriquecer con datos de outputs de API
+      const outputs = await getJobOutputs(cesgaJobId);
+      
+      let updateData = {
+        updatedAt: serverTimestamp(),
+        organism: outputs?.organism || proteinMatch?.organism || null,
+        uniprotId: outputs?.uniprot || proteinMatch?.uniprot_id || null,
+        plddt: outputs?.plddt ?? null,
+      };
+
+      // Si encontramos la proteína en el catálogo, agregar más información
+      if (proteinMatch) {
+        updateData.proteinId = proteinMatch.protein_id || null;
+        updateData.pdbId = proteinMatch.pdb_id || null;
+        updateData.functionalCategory = proteinMatch.category || null;
+        
+        // Si tiene ID, obtener detalles completos
+        if (proteinMatch.protein_id) {
+          const fullDetails = await getProteinDetails(proteinMatch.protein_id);
+          if (fullDetails) {
+            const metadata = extractProteinMetadata(fullDetails);
+            updateData = { ...updateData, ...metadata };
+          }
+        }
+      }
+
+      // Si tenemos outputs con identified_protein, obtener detalles por ID
+      if (outputs?.identified_protein) {
+        const proteinDetails = await getProteinDetails(outputs.identified_protein);
+        if (proteinDetails) {
+          const metadata = extractProteinMetadata(proteinDetails);
+          updateData = { ...updateData, ...metadata };
+        }
+      }
+
+      await updateDoc(doc(db, "jobs", jobId), updateData);
+    } catch (e) {
+      console.error("Error enriqueciendo job:", e);
+    }
+  }, 2000);
+}
+
 export default function SubmitFasta() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -75,6 +129,8 @@ export default function SubmitFasta() {
   const [sequenceWarnings, setSequenceWarnings] = useState([]);
   const [parsedSequences, setParsedSequences] = useState([]);
   const [multiSubmitSuccess, setMultiSubmitSuccess] = useState(0);
+
+  /* Nuevos campos para filtrado */
 
   /* Load project name if coming from a project */
   useEffect(() => {
@@ -89,6 +145,7 @@ export default function SubmitFasta() {
   const [errorMsg, setErrorMsg] = useState(null);
 
   const [resourcePreset, setResourcePreset] = useState("Alta");
+  const [resourcesOpen, setResourcesOpen] = useState(false);
   const [customResources, setCustomResources] = useState({ cpu: "", gpu: "", memory: "", runtime: "" });
 
   const CUSTOM_LIMITS = {
@@ -221,16 +278,10 @@ export default function SubmitFasta() {
   }, [jobStatus]);
 
   useEffect(() => {
-    if (jobStatus?.status === "COMPLETED" && !jobOutputs) {
-      Promise.all([
-        fetch(`https://api-mock-cesga.onrender.com/jobs/${jobStatus.id}/outputs`).then(r => r.json()),
-        fetch(`https://api-mock-cesga.onrender.com/jobs/${jobStatus.id}/accounting`).then(r => r.json())
-      ]).then(([outputs, accounting]) => {
-        setJobOutputs(outputs);
-        setJobAccounting(accounting);
-      }).catch(e => console.error(e));
+    if (jobStatus?.status === "COMPLETED") {
+      navigate(`/app?job=${jobStatus.id}`);
     }
-  }, [jobStatus, jobOutputs]);
+  }, [jobStatus]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -264,6 +315,30 @@ export default function SubmitFasta() {
         const seq = parsedSequences[i];
         const assignedFileName = (parsedSequences.length === 1 && customName.trim() ? customName.trim() : seq.name) + ".fasta";
 
+        // Opción 1: Intentar buscar la proteína en el catálogo por nombre
+        let catalogProtein = null;
+        let enrichmentData = {};
+        
+        if (parsedSequences.length === 1 && customName.trim()) {
+          // Si el usuario dio un nombre = usar ese
+          catalogProtein = await findBestProteinMatch(customName.trim(), seq.aaCount);
+        } else {
+          // Si no, usar el nombre parseado del FASTA
+          catalogProtein = await findBestProteinMatch(seq.name, seq.aaCount);
+        }
+
+        // Si encontramos una coincidencia, preparar datos de enriquecimiento
+        if (catalogProtein) {
+          enrichmentData = {
+            proteinId: catalogProtein.protein_id || null,
+            uniprot: catalogProtein.uniprot_id || null,
+            pdbId: catalogProtein.pdb_id || null,
+            category: catalogProtein.category || null,
+            organism: catalogProtein.organism || null,
+            molecularWeight: catalogProtein.molecular_weight_kda || null,
+          };
+        }
+
         const response = await fetch("https://api-mock-cesga.onrender.com/jobs/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json", accept: "application/json" },
@@ -285,7 +360,7 @@ export default function SubmitFasta() {
         const assignedName = parsedSequences.length === 1 && customName.trim() ? customName.trim() : fallbackName;
 
         if (auth.currentUser) {
-          await addDoc(collection(db, "jobs"), {
+          const jobRef = await addDoc(collection(db, "jobs"), {
             userId: auth.currentUser.uid,
             cesgaJobId: data.job_id,
             proteinName: assignedName,
@@ -293,8 +368,14 @@ export default function SubmitFasta() {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             fastaContent: seq.cleanFasta,
+            aaLength: seq.aaCount,
             ...(projectId ? { projectId, ...(projectName ? { projectName } : {}) } : {}),
+            // Datos enriquecidos del catálogo
+            ...enrichmentData,
           });
+          
+          /* Enriquecer automáticamente cuando se completa */
+          enrichJobWhenCompleted(jobRef.id, data.job_id, assignedName);
         }
         
         submittedJobs.push(data);
@@ -397,25 +478,24 @@ export default function SubmitFasta() {
                 if (preset === 'Baja') label = 'Baja fiabilidad';
 
                 return (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setResourcePreset(preset)}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150 ease-in-out border outline-none ${
-                      isSelected
-                        ? "border-[#2dd4bf] text-[#2dd4bf] bg-[rgba(45,212,191,0.07)]"
-                        : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-transparent"
-                    }`}
-                  >
-                    {label}
+                  <div key={preset} className="relative mt-4">
                     {preset === 'Alta' && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-sm uppercase tracking-wider font-bold ${
-                        isSelected ? "bg-[#2dd4bf]/20 text-[#2dd4bf]" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-                      }`}>
+                      <span className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#2dd4bf] text-slate-900 shadow-sm">
                         Recomendado
                       </span>
                     )}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setResourcePreset(preset)}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150 ease-in-out border outline-none ${
+                        isSelected
+                          ? "border-[#2dd4bf] text-[#2dd4bf] bg-[rgba(45,212,191,0.07)]"
+                          : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-transparent"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -423,24 +503,36 @@ export default function SubmitFasta() {
             {/* Preset Info / Custom Form */}
             {resourcePreset !== 'Personalizado' ? (
               <div>
-                <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-[10px] py-[14px] px-[18px] flex flex-wrap lg:flex-nowrap items-center justify-between gap-4">
-                  {[
-                    { label: "CPU", value: `${PRESET_RESOURCES[resourcePreset].cpu} cores` },
-                    { label: "GPU (GB)", value: `${PRESET_RESOURCES[resourcePreset].gpu} GB` },
-                    { label: "Memoria", value: `${PRESET_RESOURCES[resourcePreset].mem} GB` },
-                    { label: "Max runtime", value: `${PRESET_RESOURCES[resourcePreset].runtime} s` },
-                    { label: "Resolución 3D", value: PRESET_RESOURCES[resourcePreset].res }
-                  ].map((field, idx) => (
-                    <div key={idx} className="flex flex-col gap-1">
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-medium">{field.label}</span>
-                      <span className="text-[14px] font-medium text-slate-700 dark:text-slate-200">{field.value}</span>
+                <button
+                  type="button"
+                  onClick={() => setResourcesOpen((o) => !o)}
+                  className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mb-2"
+                >
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${resourcesOpen ? "rotate-180" : ""}`} />
+                  {resourcesOpen ? "Ocultar especificaciones" : "Ver especificaciones"}
+                </button>
+                {resourcesOpen && (
+                  <>
+                    <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-[10px] py-[14px] px-[18px] flex flex-wrap lg:flex-nowrap items-center justify-between gap-4">
+                      {[
+                        { label: "CPU", value: `${PRESET_RESOURCES[resourcePreset].cpu} cores` },
+                        { label: "GPU (GB)", value: `${PRESET_RESOURCES[resourcePreset].gpu} GB` },
+                        { label: "Memoria", value: `${PRESET_RESOURCES[resourcePreset].mem} GB` },
+                        { label: "Max runtime", value: `${PRESET_RESOURCES[resourcePreset].runtime} s` },
+                        { label: "Resolución 3D", value: PRESET_RESOURCES[resourcePreset].res }
+                      ].map((field, idx) => (
+                        <div key={idx} className="flex flex-col gap-1">
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-medium">{field.label}</span>
+                          <span className="text-[14px] font-medium text-slate-700 dark:text-slate-200">{field.value}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                {PRESET_RESOURCES[resourcePreset].note && (
-                  <p className="mt-2 text-[12px] text-[#4b5872]">
-                    {PRESET_RESOURCES[resourcePreset].note}
-                  </p>
+                    {PRESET_RESOURCES[resourcePreset].note && (
+                      <p className="mt-2 text-[12px] text-[#4b5872]">
+                        {PRESET_RESOURCES[resourcePreset].note}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             ) : (
@@ -580,31 +672,44 @@ export default function SubmitFasta() {
                     <div>
                       <h4 className="text-[11px] font-semibold text-[#64748b] tracking-[0.08em] uppercase mb-3">Estructura</h4>
                       <div className="flex flex-col gap-2.5">
-                         <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
-                           <span className="text-xs text-slate-800 dark:text-slate-200">pLDDT medio</span>
-                           <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                              jobOutputs.metrics.plddt_mean > 90 ? 'bg-[#2dd4bf]/20 text-[#2dd4bf]' :
-                              jobOutputs.metrics.plddt_mean >= 70 ? 'bg-blue-500/20 text-blue-400' :
-                              jobOutputs.metrics.plddt_mean >= 50 ? 'bg-amber-500/20 text-amber-500' :
-                              'bg-red-500/20 text-red-500'
-                           }`}>
-                             {jobOutputs.metrics.plddt_mean.toFixed(1)}
-                           </span>
-                         </div>
-                         <div className="bg-slate-50 dark:bg-slate-900/40 px-3 py-2.5 border border-slate-200 dark:border-slate-700/50 rounded-[6px] flex flex-col gap-2">
-                           <span className="text-xs text-slate-800 dark:text-slate-200">Fracción de residuos</span>
-                           <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] uppercase font-medium tracking-wider">
-                             <span className="text-[#2dd4bf]">Muy Alta: {(jobOutputs.metrics.fraction_plddt_above_90 * 100).toFixed(0)}%</span>
-                             <span className="text-blue-400">Alta: {(jobOutputs.metrics.fraction_plddt_70_to_90 * 100).toFixed(0)}%</span>
-                             <span className="text-amber-500">Media: {(jobOutputs.metrics.fraction_plddt_50_to_70 * 100).toFixed(0)}%</span>
-                             <span className="text-red-500">Baja: {(jobOutputs.metrics.fraction_plddt_below_50 * 100).toFixed(0)}%</span>
-                           </div>
-                         </div>
+                         {(() => {
+                           const plddt = jobOutputs.structural_data?.confidence?.plddt_mean
+                             ?? jobOutputs.structural_data?.confidence?.plddt_average
+                             ?? jobOutputs.metrics?.plddt_mean
+                             ?? null;
+                           const fractions = jobOutputs.structural_data?.confidence ?? jobOutputs.metrics ?? null;
+                           return plddt != null ? (
+                             <>
+                               <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
+                                 <span className="text-xs text-slate-800 dark:text-slate-200">pLDDT medio</span>
+                                 <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
+                                    plddt > 90 ? 'bg-[#2dd4bf]/20 text-[#2dd4bf]' :
+                                    plddt >= 70 ? 'bg-blue-500/20 text-blue-400' :
+                                    plddt >= 50 ? 'bg-amber-500/20 text-amber-500' :
+                                    'bg-red-500/20 text-red-500'
+                                 }`}>
+                                   {plddt.toFixed(1)}
+                                 </span>
+                               </div>
+                               {fractions && (fractions.fraction_plddt_above_90 != null || fractions.fraction_plddt_70_to_90 != null) && (
+                                 <div className="bg-slate-50 dark:bg-slate-900/40 px-3 py-2.5 border border-slate-200 dark:border-slate-700/50 rounded-[6px] flex flex-col gap-2">
+                                   <span className="text-xs text-slate-800 dark:text-slate-200">Fracción de residuos</span>
+                                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] uppercase font-medium tracking-wider">
+                                     <span className="text-[#2dd4bf]">Muy Alta: {((fractions.fraction_plddt_above_90 ?? 0) * 100).toFixed(0)}%</span>
+                                     <span className="text-blue-400">Alta: {((fractions.fraction_plddt_70_to_90 ?? 0) * 100).toFixed(0)}%</span>
+                                     <span className="text-amber-500">Media: {((fractions.fraction_plddt_50_to_70 ?? 0) * 100).toFixed(0)}%</span>
+                                     <span className="text-red-500">Baja: {((fractions.fraction_plddt_below_50 ?? 0) * 100).toFixed(0)}%</span>
+                                   </div>
+                                 </div>
+                               )}
+                             </>
+                           ) : null;
+                         })()}
                          {jobOutputs.derived_insights && (
                            <>
                              <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
                                <span className="text-xs text-slate-800 dark:text-slate-200">Solubilidad score</span>
-                               <span className="text-xs text-slate-600 dark:text-slate-300">{jobOutputs.derived_insights.solubility_score.toFixed(2)}</span>
+                               <span className="text-xs text-slate-600 dark:text-slate-300">{jobOutputs.derived_insights.solubility_score?.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
                                <span className="text-xs text-slate-800 dark:text-slate-200">Estado estabilidad</span>
@@ -621,11 +726,11 @@ export default function SubmitFasta() {
                       <div className="flex flex-col gap-2.5">
                          <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
                            <span className="text-xs text-slate-800 dark:text-slate-200">CPU Hours</span>
-                           <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.cpu_hours.toFixed(2)} h</span>
+                           <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.cpu_hours?.toFixed(2)} h</span>
                          </div>
                          <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
                            <span className="text-xs text-slate-800 dark:text-slate-200">GPU Hours</span>
-                           <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.gpu_hours.toFixed(2)} h</span>
+                           <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.gpu_hours?.toFixed(2)} h</span>
                          </div>
                          <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
                            <span className="text-xs text-slate-800 dark:text-slate-200">Wall Time</span>
