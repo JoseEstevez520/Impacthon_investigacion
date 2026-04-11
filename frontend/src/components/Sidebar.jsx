@@ -55,11 +55,19 @@ export default function Sidebar() {
       }`}
     >
       {/* Logo + collapse toggle */}
-      <div className={`flex items-center h-14 border-b border-slate-200 dark:border-slate-700 ${isOpen ? "px-4 justify-between" : "justify-center"}`}>
-        {isOpen && (
-          <span className="font-bold text-base text-primary-600 dark:text-primary-400 whitespace-nowrap tracking-tight">
+      <div className={`flex items-center h-14 border-b border-slate-200 dark:border-slate-700 ${isOpen ? "px-4 justify-between" : "flex-col justify-center gap-1"}`}>
+        {isOpen ? (
+          <Link
+            to="/"
+            className="font-bold text-base text-primary-600 dark:text-primary-400 whitespace-nowrap tracking-tight hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
+            title="Ir a la página de inicio"
+          >
             LocalFold
-          </span>
+          </Link>
+        ) : (
+          <Link to="/" title="Página de inicio" className="text-primary-500 hover:text-primary-400 transition-colors">
+            <Dna className="w-5 h-5" />
+          </Link>
         )}
         <button
           onClick={() => setIsOpen(!isOpen)}

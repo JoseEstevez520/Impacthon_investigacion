@@ -1,7 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { auth } from "../lib/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { Dna, Zap, Bot, Share2, ArrowRight, Upload, Cpu, Eye, Clock, Server, Check } from "lucide-react";
+import {
+  Dna, Zap, Bot, Share2, ArrowRight, Upload, Cpu, Eye,
+  Server, Check, Users, BrainCircuit, FolderOpen, Bell,
+  FlaskConical, AtSign, Shield, BarChart3,
+} from "lucide-react";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -18,65 +22,83 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col font-sans selection:bg-primary-500/30">
-      
+
       {/* Navbar */}
       <nav className="flex justify-between items-center p-6 lg:px-12 border-b border-white/5 sticky top-0 bg-slate-950/80 backdrop-blur-md z-50">
         <div className="flex items-center gap-2">
           <Dna className="w-8 h-8 text-primary-500" />
           <span className="text-xl font-bold tracking-tight text-white">Local<span className="text-primary-500">Fold</span></span>
         </div>
-        <button 
+        <button
           onClick={handleLogin}
           className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
         >
-          Iniciar sesión
+          Iniciar sesión →
         </button>
       </nav>
 
       {/* ── HERO ── */}
       <section className="flex flex-col items-center justify-center text-center px-4 sm:px-6 pt-24 pb-16 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-primary-600/10 blur-[140px] rounded-full pointer-events-none" />
 
         <div className="z-10 max-w-4xl space-y-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-sm font-medium">
-            <span className="flex h-2 w-2 rounded-full bg-primary-500 animate-pulse"></span>
-            Hackathon Impacthon 2026
+            <span className="flex h-2 w-2 rounded-full bg-primary-500 animate-pulse" />
+            Impacthon 2026 · CESGA FinisTerrae III
           </div>
-          
+
           <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 leading-tight">
-            AlphaFold en tu navegador,<br/>sin abrir la terminal.
+            AlphaFold en tu navegador,<br />sin abrir la terminal.
           </h1>
-          
+
           <p className="text-lg lg:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Predice, dobla y analiza estructuras proteicas delegando el cómputo masivo al clúster del <b className="text-white">CESGA</b>. Limpiador FASTA inteligente, matrices PAE reactivas y un Copiloto IA integrado.
+            Predice estructuras proteicas delegando el cómputo masivo al clúster del <strong className="text-white">CESGA</strong>. Analiza resultados con IA especializada y colabora con tu equipo en tiempo real.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <button 
+            <button
               onClick={handleLogin}
-              className="flex items-center gap-2 px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold text-lg shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] transition-all hover:scale-105 active:scale-95"
+              className="flex items-center gap-2 px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold text-lg shadow-[0_0_40px_-10px_rgba(99,102,241,0.6)] transition-all hover:scale-105 active:scale-95"
             >
-              Comenzar gratis con Google
+              Empezar con Google
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF / STACK ── */}
-      <section className="border-y border-white/5 py-8 px-4">
-        <p className="text-center text-xs text-slate-500 uppercase tracking-widest mb-8 font-medium">Potenciado por tecnología de clase mundial</p>
-        <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-4 max-w-4xl mx-auto">
+      {/* ── MÉTRICAS ── */}
+      <section className="border-y border-white/5 py-12 px-4">
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
-            { label: "CESGA FinisTerrae III", sub: "Cómputo HPC" },
-            { label: "AlphaFold 2", sub: "Motor de predicción" },
-            { label: "Google Gemini", sub: "IA conversacional" },
-            { label: "n8n Orchestrator", sub: "Automatización AI" },
-            { label: "Firebase", sub: "Auth + Cloud DB" },
-          ].map((tech) => (
-            <div key={tech.label} className="text-center">
-              <p className="text-sm font-semibold text-slate-200">{tech.label}</p>
-              <p className="text-xs text-slate-500">{tech.sub}</p>
+            { value: "500×", label: "más rápido que cómputo local", color: "text-primary-400" },
+            { value: "< 1 min", label: "de configuración para empezar", color: "text-emerald-400" },
+            { value: "0", label: "instalaciones requeridas", color: "text-amber-400" },
+            { value: "A100", label: "GPUs del FinisTerrae III", color: "text-rose-400" },
+          ].map((m) => (
+            <div key={m.label}>
+              <p className={`text-3xl lg:text-4xl font-extrabold ${m.color}`}>{m.value}</p>
+              <p className="text-xs text-slate-500 mt-1 leading-snug">{m.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── STACK ── */}
+      <section className="py-8 px-4">
+        <p className="text-center text-xs text-slate-600 uppercase tracking-widest mb-6 font-medium">Potenciado por</p>
+        <div className="flex flex-wrap justify-center items-center gap-x-10 gap-y-4 max-w-4xl mx-auto">
+          {[
+            { label: "CESGA FinisTerrae III", sub: "HPC" },
+            { label: "AlphaFold 2", sub: "Predicción" },
+            { label: "Google Gemini 1.5 Pro", sub: "IA conversacional" },
+            { label: "n8n", sub: "Orquestación AI" },
+            { label: "Firebase", sub: "Auth + DB" },
+            { label: "pdbe-molstar", sub: "Visor 3D" },
+          ].map((t) => (
+            <div key={t.label} className="text-center">
+              <p className="text-sm font-semibold text-slate-300">{t.label}</p>
+              <p className="text-[11px] text-slate-600">{t.sub}</p>
             </div>
           ))}
         </div>
@@ -91,31 +113,23 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {/* Línea conectora horizontal (desktop) */}
-            <div className="hidden md:block absolute top-10 left-[calc(16.6%)] right-[calc(16.6%)] h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
-
+            <div className="hidden md:block absolute top-10 left-[calc(16.6%)] right-[calc(16.6%)] h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
             {[
               {
-                step: "01",
-                icon: <Upload className="w-6 h-6" />,
+                step: "01", icon: <Upload className="w-6 h-6" />, color: "text-amber-400",
                 title: "Sube tu FASTA",
-                desc: "Pega la secuencia o arrastra el fichero. Nuestro motor la limpia y valida automáticamente antes de tocar el clúster.",
-                color: "text-amber-400"
+                desc: "Pega la secuencia o arrastra el fichero. El nombre se detecta automáticamente del header UniProt. Sin scripts, sin SSH.",
               },
               {
-                step: "02",
-                icon: <Cpu className="w-6 h-6" />,
+                step: "02", icon: <Cpu className="w-6 h-6" />, color: "text-primary-400",
                 title: "El CESGA computa",
                 desc: "LocalFold negocia con Slurm, reserva nodos GPU A100 y ejecuta AlphaFold 2 en el FinisTerrae III de forma transparente.",
-                color: "text-primary-400"
               },
               {
-                step: "03",
-                icon: <Eye className="w-6 h-6" />,
-                title: "Analiza los resultados",
-                desc: "Visor 3D interactivo, heatmap PAE y Proteia — la IA conversacional que traduce los datos técnicos a conclusiones biológicas accionables.",
-                color: "text-emerald-400"
-              }
+                step: "03", icon: <Eye className="w-6 h-6" />, color: "text-emerald-400",
+                title: "Analiza y colabora",
+                desc: "Visor 3D interactivo, heatmap PAE, análisis IA con Proteia y workspace colaborativo para compartir con tu equipo.",
+              },
             ].map((item) => (
               <div key={item.step} className="relative flex flex-col items-center text-center">
                 <div className={`w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-6 ${item.color} relative z-10`}>
@@ -130,39 +144,57 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── FEATURE GRID ── */}
+      {/* ── FEATURES ── */}
       <section className="py-8 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FeatureCard 
-              icon={<Zap className="w-6 h-6 text-amber-400" />}
-              title="UX Zero-Friction"
-              desc="Valida tu secuencia FASTA instantáneamente. Sin scripts, sin SSH. Pegar y doblar."
-            />
-            <FeatureCard 
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-white mb-3">Todo lo que necesita un laboratorio moderno</h2>
+            <p className="text-slate-400 text-sm max-w-lg mx-auto">Desde la predicción hasta la publicación, sin cambiar de herramienta.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <FeatureCard
               icon={<Bot className="w-6 h-6 text-emerald-400" />}
-              title="Proteia"
-              desc="Proteia lee las métricas (pLDDT, solubilidad) y te traduce la ciencia al lenguaje de laboratorio con respuestas conversacionales."
+              title="Proteia — Copiloto IA"
+              desc="Lee pLDDT, solubilidad e inestabilidad y te traduce los datos técnicos a conclusiones biológicas accionables en lenguaje natural."
             />
-            <FeatureCard 
-              icon={<Share2 className="w-6 h-6 text-blue-400" />}
-              title="Comparte tus hallazgos"
-              desc="Arquitectura Link-Stateless. Pasa la URL a tu colega y verá la reconstrucción 3D y el Heatmap al instante."
+            <FeatureCard
+              icon={<BrainCircuit className="w-6 h-6 text-primary-400" />}
+              title="Asistente RAG especializado"
+              desc='IA entrenada en literatura de biología estructural. Escribe @ para adjuntar el contexto de cualquier predicción propia y obtener análisis personalizados.'
+            />
+            <FeatureCard
+              icon={<Users className="w-6 h-6 text-blue-400" />}
+              title="Proyectos colaborativos"
+              desc="Crea workspaces de equipo, invita colaboradores por email y centraliza todas las predicciones del grupo en un solo lugar."
+            />
+            <FeatureCard
+              icon={<BarChart3 className="w-6 h-6 text-amber-400" />}
+              title="Visor 3D + PAE heatmap"
+              desc="Estructura molecular interactiva con coloreado por confianza y matriz de error de alineación predicho para análisis de dominios."
+            />
+            <FeatureCard
+              icon={<Bell className="w-6 h-6 text-rose-400" />}
+              title="Notificaciones en tiempo real"
+              desc="Recibe alertas del sistema cuando una predicción se completa o falla, aunque tengas la pestaña en segundo plano."
+            />
+            <FeatureCard
+              icon={<FlaskConical className="w-6 h-6 text-violet-400" />}
+              title="Informe PDF automático"
+              desc="Genera en un clic un informe con estructura 3D, métricas de confianza, propiedades biológicas y análisis de Proteia listo para publicar."
             />
           </div>
         </div>
       </section>
 
-      {/* ── COMPARATIVA CESGA ── */}
+      {/* ── COMPARATIVA ── */}
       <section className="py-24 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-extrabold text-white mb-4">Computación local vs CESGA HPC</h2>
+            <h2 className="text-3xl lg:text-4xl font-extrabold text-white mb-4">Cómputo local vs CESGA HPC</h2>
             <p className="text-slate-400 max-w-xl mx-auto">Las GPUs A100 del FinisTerrae III no son un lujo, son una necesidad para la biología moderna. Con LocalFold son accesibles para todos.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Laptop */}
             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8">
               <div className="flex items-center gap-3 mb-6">
                 <Server className="w-5 h-5 text-slate-400" />
@@ -170,20 +202,20 @@ export default function Landing() {
               </div>
               <ul className="space-y-4">
                 {[
-                  { text: "Hasta 3 semanas de cómputo por predicción", bad: true },
-                  { text: "Requiere GPU NVIDIA + 3 TB en disco", bad: true },
-                  { text: "Configuración Linux + Docker + 20 dependencias", bad: true },
-                  { text: "Uso del 100% de CPU durante días", bad: true },
-                ].map((item, i) => (
+                  "Hasta 3 semanas de cómputo por predicción",
+                  "Requiere GPU NVIDIA + 3 TB en disco",
+                  "Configuración Linux + Docker + 20 dependencias",
+                  "Bloquea el equipo durante días",
+                  "Sin interfaz — solo línea de comandos",
+                ].map((text, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-slate-400">
-                    <span className="text-red-500 mt-0.5 flex-shrink-0">✕</span>
-                    {item.text}
+                    <span className="text-red-500 mt-0.5 shrink-0">✕</span>
+                    {text}
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* CESGA */}
             <div className="bg-primary-950/30 border border-primary-800/40 rounded-2xl p-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-primary-600 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest rounded-bl-xl">Recomendado</div>
               <div className="flex items-center gap-3 mb-6">
@@ -195,10 +227,11 @@ export default function Landing() {
                   "Predicción completa en minutos, no semanas",
                   "Sin instalaciones. 100% desde el navegador",
                   "Nodos GPU A100 dedicados en FinisTerrae III",
-                  "Deduplicación global: si alguien ya lo calculó, respuesta instantánea",
+                  "Interfaz visual con IA integrada",
+                  "Colaboración de equipo incluida",
                 ].map((text, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-slate-200">
-                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
                     {text}
                   </li>
                 ))}
@@ -208,12 +241,81 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── QUOTE / TESTIMONIAL ── */}
+      {/* ── PARA QUIÉN ── */}
+      <section className="py-16 px-4 sm:px-6 border-y border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-white mb-3">Diseñado para investigadores reales</h2>
+            <p className="text-slate-400 text-sm max-w-lg mx-auto">LocalFold no asume que sabes Linux. Asume que sabes biología.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                who: "Bioquímicos y biólogos moleculares",
+                icon: <FlaskConical className="w-5 h-5 text-emerald-400" />,
+                use: "Predice la estructura de tu proteína de interés sin tocar la terminal. Proteia interpreta los resultados en el contexto de tu experimento.",
+              },
+              {
+                who: "Grupos de investigación",
+                icon: <FolderOpen className="w-5 h-5 text-blue-400" />,
+                use: "Centraliza todas las predicciones del lab en proyectos colaborativos. Cada miembro ve los resultados del equipo en tiempo real.",
+              },
+              {
+                who: "Usuarios de CESGA",
+                icon: <Shield className="w-5 h-5 text-amber-400" />,
+                use: "Aprovecha al máximo tu asignación de horas de cómputo sin configurar entornos. LocalFold gestiona Slurm y los recursos GPU por ti.",
+              },
+            ].map((item) => (
+              <div key={item.who} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                <div className="flex items-center gap-2.5 mb-3">
+                  {item.icon}
+                  <h3 className="font-bold text-white text-sm">{item.who}</h3>
+                </div>
+                <p className="text-slate-400 text-sm leading-relaxed">{item.use}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── RAG HIGHLIGHT ── */}
+      <section className="py-24 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-br from-slate-900 to-primary-950/40 border border-primary-800/30 rounded-3xl p-10 md:p-14 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-600/10 blur-[80px] rounded-full pointer-events-none" />
+            <div className="relative z-10 flex flex-col md:flex-row gap-10 items-start">
+              <div className="shrink-0 w-16 h-16 rounded-2xl bg-primary-900/50 border border-primary-700/50 flex items-center justify-center">
+                <BrainCircuit className="w-8 h-8 text-primary-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-primary-400 uppercase tracking-widest mb-2">Nuevo</p>
+                <h2 className="text-2xl lg:text-3xl font-extrabold text-white mb-4">Asistente RAG con contexto propio</h2>
+                <p className="text-slate-300 leading-relaxed mb-6">
+                  Un asistente especializado en biología estructural con base de conocimiento local. Escribe <strong className="text-primary-300">@</strong> seguido del nombre de cualquier predicción o proyecto para adjuntar sus datos como contexto — el asistente analiza tus resultados concretos, no respuestas genéricas.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { icon: <AtSign className="w-3.5 h-3.5" />, text: "@ para referenciar predicciones" },
+                    { icon: <FolderOpen className="w-3.5 h-3.5" />, text: "Contexto de proyectos completos" },
+                    { icon: <BrainCircuit className="w-3.5 h-3.5" />, text: "Base de conocimiento especializada" },
+                  ].map((t) => (
+                    <span key={t.text} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-900/50 border border-primary-700/50 text-primary-300 text-xs font-medium">
+                      {t.icon}{t.text}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── QUOTE ── */}
       <section className="py-16 px-4 border-y border-white/5">
         <div className="max-w-3xl mx-auto text-center space-y-4">
           <p className="text-slate-500 text-sm uppercase tracking-widest font-medium">Por qué lo construimos</p>
           <blockquote className="text-2xl lg:text-3xl font-bold text-white leading-relaxed">
-            "El Premio Nobel de AlphaFold deberían poder aprovecharlo todos los investigadores. <span className="text-primary-400">No solo los que saben Linux.</span>"
+            "El Premio Nobel de AlphaFold debería poder aprovecharlo <span className="text-primary-400">cualquier investigador</span>, no solo los que saben Linux."
           </blockquote>
           <p className="text-slate-400 text-sm">— Equipo LocalFold, Impacthon 2026</p>
         </div>
@@ -223,10 +325,10 @@ export default function Landing() {
       <section className="py-24 px-4 sm:px-6">
         <div className="max-w-2xl mx-auto text-center space-y-8">
           <h2 className="text-4xl font-extrabold text-white">¿Listo para plegar proteínas?</h2>
-          <p className="text-slate-400">Accede con tu cuenta de Google. Sin tarjeta de crédito. Sin instalaciones. El CESGA hace la computación, tú haces la ciencia.</p>
-          <button 
+          <p className="text-slate-400">Accede con tu cuenta de Google. Sin tarjeta de crédito. Sin instalaciones.<br />El CESGA hace la computación, tú haces la ciencia.</p>
+          <button
             onClick={handleLogin}
-            className="inline-flex items-center gap-2 px-10 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold text-lg shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] transition-all hover:scale-105 active:scale-95"
+            className="inline-flex items-center gap-2 px-10 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold text-lg shadow-[0_0_40px_-10px_rgba(99,102,241,0.5)] transition-all hover:scale-105 active:scale-95"
           >
             Comenzar gratis con Google
             <ArrowRight className="w-5 h-5" />
@@ -241,11 +343,11 @@ export default function Landing() {
 
 function FeatureCard({ icon, title, desc }) {
   return (
-    <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl text-left hover:border-slate-700 transition-colors backdrop-blur-sm">
-      <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center mb-4 border border-slate-700/50">
+    <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl text-left hover:border-slate-700 transition-colors">
+      <div className="w-11 h-11 rounded-xl bg-slate-800 flex items-center justify-center mb-4 border border-slate-700/50">
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-slate-200 mb-2">{title}</h3>
+      <h3 className="text-base font-bold text-slate-200 mb-2">{title}</h3>
       <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
     </div>
   );

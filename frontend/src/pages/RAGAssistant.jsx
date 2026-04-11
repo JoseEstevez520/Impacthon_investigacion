@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Send, Bot, User, BrainCircuit, BookOpen, Dna, FlaskConical,
   Microscope, X, FolderOpen, CheckCircle2, GitBranch, Clock, XCircle, AtSign,
+  Copy, Check,
 } from "lucide-react";
 import { ragApi } from "../api/ragApi";
 import { db, auth } from "../lib/firebase";
@@ -22,6 +23,24 @@ const STATUS_ICON = {
   PENDING:   <Clock        className="w-3.5 h-3.5 text-slate-400"  />,
   FAILED:    <XCircle      className="w-3.5 h-3.5 text-red-500"    />,
 };
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button
+      onClick={copy}
+      className="self-start flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors opacity-0 group-hover/msg:opacity-100"
+    >
+      {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+      {copied ? "Copiado" : "Copiar"}
+    </button>
+  );
+}
 
 function streamText(fullText, onChunk, onDone) {
   let i = 0;
@@ -264,6 +283,7 @@ export default function RAGAssistant() {
               }`}>
                 {msg.role === "ai" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
               </div>
+              <div className="group/msg flex flex-col gap-1">
               <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                 msg.role === "ai"
                   ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:text-slate-200"
@@ -282,18 +302,15 @@ export default function RAGAssistant() {
                 )}
                 {msg.role === "ai" ? (
                   <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-li:my-0.5 prose-headings:my-2">
-                    {msg.streaming ? (
-                      <span className="whitespace-pre-wrap">
-                        {msg.text}
-                        <span className="inline-block w-0.5 h-[1em] bg-primary-500 align-text-bottom animate-pulse ml-px" />
-                      </span>
-                    ) : (
-                      <ReactMarkdown>{msg.text}</ReactMarkdown>
-                    )}
+                    <ReactMarkdown>{msg.streaming ? msg.text + "▍" : msg.text}</ReactMarkdown>
                   </div>
                 ) : (
                   <span className="whitespace-pre-wrap">{msg.text}</span>
                 )}
+              </div>
+              {msg.role === "ai" && !msg.streaming && (
+                <CopyButton text={msg.text} />
+              )}
               </div>
             </div>
           </div>

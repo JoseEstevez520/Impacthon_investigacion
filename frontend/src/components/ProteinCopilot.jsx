@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Bot, User, Sparkles } from "lucide-react";
+import { Send, Bot, User, Sparkles, Copy, Check } from "lucide-react";
 import { copilotApi } from "../api/copilotApi";
 import ReactMarkdown from "react-markdown";
 
@@ -19,6 +19,24 @@ function streamText(fullText, onChunk, onDone) {
 
   raf = requestAnimationFrame(tick);
   return () => cancelAnimationFrame(raf);
+}
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button
+      onClick={copy}
+      className="self-start flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors opacity-0 group-hover/msg:opacity-100"
+    >
+      {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+      {copied ? "Copiado" : "Copiar"}
+    </button>
+  );
 }
 
 export default function ProteinCopilot({ jobId, proteinName, statusData, onSummaryReady }) {
@@ -137,29 +155,27 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
                 {msg.role === "ai" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
               </div>
 
-              <div className={`p-3 rounded-2xl text-sm leading-relaxed ${
-                msg.role === "ai"
-                  ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 shadow-sm"
-                  : "bg-primary-600 text-white shadow-md shadow-primary-500/10"
-              }`}>
-                {msg.isSummary && (
-                  <span className="inline-block px-2 py-0.5 rounded bg-primary-50 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 text-[10px] font-bold uppercase mb-2">
-                    Resumen Automático
-                  </span>
-                )}
-                {msg.role === "ai" ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-li:my-0.5 prose-headings:my-2">
-                    {msg.streaming ? (
-                      <span className="whitespace-pre-wrap">
-                        {msg.text}
-                        <span className="inline-block w-0.5 h-[1em] bg-primary-500 align-text-bottom animate-pulse ml-px" />
-                      </span>
-                    ) : (
-                      <ReactMarkdown>{msg.text}</ReactMarkdown>
-                    )}
-                  </div>
-                ) : (
-                  <div className="whitespace-pre-wrap">{msg.text}</div>
+              <div className="group/msg flex flex-col gap-1">
+                <div className={`p-3 rounded-2xl text-sm leading-relaxed ${
+                  msg.role === "ai"
+                    ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 shadow-sm"
+                    : "bg-primary-600 text-white shadow-md shadow-primary-500/10"
+                }`}>
+                  {msg.isSummary && (
+                    <span className="inline-block px-2 py-0.5 rounded bg-primary-50 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 text-[10px] font-bold uppercase mb-2">
+                      Resumen Automático
+                    </span>
+                  )}
+                  {msg.role === "ai" ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-li:my-0.5 prose-headings:my-2">
+                      <ReactMarkdown>{msg.streaming ? msg.text + "▍" : msg.text}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div className="whitespace-pre-wrap">{msg.text}</div>
+                  )}
+                </div>
+                {msg.role === "ai" && !msg.streaming && (
+                  <CopyButton text={msg.text} />
                 )}
               </div>
             </div>
