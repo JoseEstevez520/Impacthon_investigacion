@@ -75,6 +75,13 @@ export default function Viewer() {
           visualStyle: smartMode
         }, true);
       }
+
+      // Al cambiar la representación, pdbe-molstar reconstruye los componentes gráficamente
+      // dejándolos visibles por defecto. Como luchar contra el repintado de la GPU genera
+      // desincronizaciones, la solución más limpia es reiniciar nuestros selectores 
+      // visuales para que coincidan con la realidad de la pantalla (todo encendido).
+      setActiveComponents(prev => prev.map(c => ({ ...c, visible: true })));
+
     } catch (e) {
       console.warn("No se pudo aplicar el modo visual", e);
     }
@@ -191,6 +198,9 @@ export default function Viewer() {
     const bio = jobData?.biological;
     const solScore = bio?.solubility_score;
     const instIdx = bio?.instability_index;
+    const toxAlerts = bio?.toxicity_alerts;
+    const allerAlerts = bio?.allergenicity_alerts;
+    const secStruct = bio?.secondary_structure_prediction;
     const solLabel = solScore == null ? null
       : solScore >= 70 ? "Alta — apta para uso en laboratorio"
         : solScore >= 40 ? "Media — puede requerir optimización"
@@ -227,7 +237,7 @@ export default function Viewer() {
         </figure>` : ""}
       </div>` : "";
 
-    const bioHtml = (solScore != null || instIdx != null) ? `
+    const bioHtml = (solScore != null || instIdx != null || toxAlerts?.length > 0 || allerAlerts?.length > 0 || secStruct) ? `
       <section>
         <h2>Propiedades Biológicas</h2>
         <div class="bio-grid">
@@ -245,6 +255,41 @@ export default function Viewer() {
             <div class="bio-badge" style="background:${instIdx < 40 ? "#d1fae5" : "#fee2e2"};color:${instIdx < 40 ? "#065f46" : "#991b1b"}">${stabLabel}</div>
           </div>` : ""}
         </div>
+        ${(toxAlerts?.length > 0 || allerAlerts?.length > 0) ? `
+          <div style="margin-top: 12px; display: grid; gap: 8px;">
+            ${toxAlerts?.length > 0 ? `
+              <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 10px; border-radius: 8px;">
+                <div style="color: #dc2626; font-size: 9pt; font-weight: 700; text-transform: uppercase;">Toxicidad (In-silico)</div>
+                <ul style="margin: 4px 0 0 16px; font-size: 8.5pt; color: #991b1b;">
+                  ${toxAlerts.map(t => `<li>${t}</li>`).join("")}
+                </ul>
+              </div>
+            ` : ""}
+            ${allerAlerts?.length > 0 ? `
+              <div style="background: #fff7ed; border: 1px solid #fed7aa; padding: 10px; border-radius: 8px;">
+                <div style="color: #ea580c; font-size: 9pt; font-weight: 700; text-transform: uppercase;">Potencial Alergénico</div>
+                <ul style="margin: 4px 0 0 16px; font-size: 8.5pt; color: #9a3412;">
+                  ${allerAlerts.map(a => `<li>${a}</li>`).join("")}
+                </ul>
+              </div>
+            ` : ""}
+          </div>
+        ` : ""}
+        ${secStruct ? `
+          <div style="margin-top: 12px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px;">
+            <div style="font-size: 9pt; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Estructura Secundaria</div>
+            <div style="display: flex; height: 10px; border-radius: 99px; overflow: hidden; margin-bottom: 6px;">
+              <div style="width: ${secStruct.helix_percent}%; background: #6366f1;"></div>
+              <div style="width: ${secStruct.strand_percent}%; background: #10b981;"></div>
+              <div style="width: ${secStruct.coil_percent}%; background: #cbd5e1;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 8pt; font-weight: 600;">
+              <span style="color: #4f46e5;">α-hélice: ${secStruct.helix_percent}%</span>
+              <span style="color: #059669;">β-lámina: ${secStruct.strand_percent}%</span>
+              <span style="color: #64748b;">Coil: ${secStruct.coil_percent}%</span>
+            </div>
+          </div>
+        ` : ""}
       </section>` : "";
 
     const html = `<!DOCTYPE html>
@@ -300,7 +345,7 @@ export default function Viewer() {
   .plddt-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 9pt; font-weight: 700; color: white; }
   .plddt-desc { font-size: 9pt; color: #475569; margin-top: 4px; }
   .plddt-bar-track { height: 8px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-top: 8px; }
-  .plddt-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 40%, #3b82f6 70%, #1d4ed8 100%); }
+  .plddt-bar-fill { height: 100%; border-radius: 99px; background-image: linear-gradient(90deg, #ef4444 0px, #f59e0b 35%, #3b82f6 65%, #1d4ed8 100%); }
 
   /* BIO GRID */
   .bio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -354,7 +399,7 @@ ${imagesHtml}
       <div class="plddt-desc">${plddtDesc}</div>
     </div>
   </div>
-  <div class="plddt-bar-track"><div class="plddt-bar-fill" style="width:${plddt}%"></div></div>
+  <div class="plddt-bar-track"><div class="plddt-bar-fill" style="width:${plddt}%; background-size: ${100 * (100 / Math.max(plddt, 1))}% 100%;"></div></div>
 </section>
 
 ${bioHtml}
@@ -494,15 +539,21 @@ ${bioHtml}
               carbs: "ball-and-stick",
               nonStandard: "ball-and-stick"
             },
-            // Keep AF specific parsing for the Blue->Red B-factor scale
+            // Según la documentación técnica, siempre debemos forzar alphafoldView: true
+            // para que Molstar pinte los B-factors usando la rampa de color de pLDDT
+            // (Dark Blue > 90, Light Blue 70-90, Yellow 50-70, Orange < 50).
             alphafoldView: true,
           };
 
           const isCif = data.pdbFileUrl && (data.pdbFileUrl.includes("_entry.id") || data.pdbFileUrl.includes("loop_"));
           if (customUrl) {
             options.customData = { url: customUrl, format: isCif ? 'cif' : 'pdb' };
+          } else if (data.uniprot) {
+            options.customData = { url: `https://alphafold.ebi.ac.uk/files/AF-${data.uniprot}-F1-model_v4.cif`, format: 'cif' };
           } else {
-            options.moleculeId = "1cbs"; // Example default molecule
+            // Fallback to a real AlphaFold model (p53) instead of an experimental PDB like 1cbs,
+            // so that the B-factors mapped to pLDDT color properly (blue/yellow/orange).
+            options.customData = { url: "https://alphafold.ebi.ac.uk/files/AF-P04637-F1-model_v4.cif", format: "cif" };
           }
 
           viewerInstance.render(viewerContainerRef.current, options);
@@ -579,8 +630,12 @@ ${bioHtml}
   const plddtConf = plddt >= 90 ? "Muy alta" : plddt >= 70 ? "Alta" : plddt >= 50 ? "Baja" : "Muy baja";
   const plddtColor = plddt >= 90 ? "text-blue-600 dark:text-blue-400" : plddt >= 70 ? "text-sky-500 dark:text-sky-400" : plddt >= 50 ? "text-amber-500" : "text-orange-500";
   const plddtBg = plddt >= 90 ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" : plddt >= 70 ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800" : plddt >= 50 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" : "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800";
-  const solScore = jobData?.biological?.solubility_score;
-  const instIdx = jobData?.biological?.instability_index;
+  const bio = jobData?.biological;
+  const solScore = bio?.solubility_score;
+  const instIdx = bio?.instability_index;
+  const toxAlerts = bio?.toxicity_alerts;
+  const allerAlerts = bio?.allergenicity_alerts;
+  const secStruct = bio?.secondary_structure_prediction;
 
   /* ── Empty state: no job selected ── */
   if (!jobId) {
@@ -740,15 +795,15 @@ ${bioHtml}
                     className="h-full rounded-full transition-all"
                     style={{
                       width: `${plddt}%`,
-                      background: "linear-gradient(90deg,#FF7D45 0%,#FFDB13 35%,#65CBF3 65%,#0053D6 100%)"
+                      backgroundImage: "linear-gradient(90deg, #FF7D45 0px, #FFDB13 35%, #65CBF3 65%, #0053D6 100%)",
+                      backgroundSize: `${100 * (100 / Math.max(plddt, 1))}% 100%`
                     }}
                   />
                 </div>
-                <div className="flex justify-between mt-1.5">
-                  {[["#FF7D45", "< 50"], ["#FFDB13", "50"], ["#65CBF3", "70"], ["#0053D6", "90+"]].map(([c, l]) => (
-                    <div key={l} className="flex items-center gap-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c }} />
-                      <span className="text-[8px] text-slate-400 dark:text-slate-500 font-mono">{l}</span>
+                <div className="flex w-full gap-0.5 mt-2.5 h-4 rounded-sm overflow-hidden">
+                  {[["#FF7D45", "< 50", "text-orange-950"], ["#FFDB13", "50", "text-yellow-950"], ["#65CBF3", "70", "text-sky-950"], ["#0053D6", "90+", "text-white"]].map(([c, l, tClass]) => (
+                    <div key={l} className="flex-1 flex items-center justify-center" style={{ background: c }}>
+                      <span className={`text-[9px] font-bold ${tClass}`}>{l}</span>
                     </div>
                   ))}
                 </div>
@@ -786,6 +841,55 @@ ${bioHtml}
                       </span>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Toxicity & Allergenicity Warnings */}
+              {(toxAlerts?.length > 0 || allerAlerts?.length > 0) && (
+                <div className="flex flex-col gap-2">
+                  {toxAlerts?.length > 0 && (
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Toxicidad (In-silico)</span>
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
+                      </div>
+                      <div className="space-y-1.5 mt-1">
+                        {toxAlerts.map((t, i) => (
+                          <span key={i} className="text-xs font-medium px-2 py-1 rounded bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 inline-block w-full">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {allerAlerts?.length > 0 && (
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Potencial Alergénico</span>
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+                      </div>
+                      <div className="space-y-1.5 mt-1">
+                        {allerAlerts.map((a, i) => (
+                          <span key={i} className="text-xs font-medium px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 inline-block w-full">{a}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Secondary Structure */}
+              {secStruct && (
+                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estructura Secundaria</p>
+                  <div className="flex w-full h-2 rounded-full overflow-hidden">
+                    <div style={{ width: `${secStruct.helix_percent}%` }} className="bg-indigo-500" title={`Hélice: ${secStruct.helix_percent}%`} />
+                    <div style={{ width: `${secStruct.strand_percent}%` }} className="bg-emerald-500" title={`Lámina: ${secStruct.strand_percent}%`} />
+                    <div style={{ width: `${secStruct.coil_percent}%` }} className="bg-slate-300 dark:bg-slate-600" title={`Coil: ${secStruct.coil_percent}%`} />
+                  </div>
+                  <div className="flex justify-between text-[10px] font-medium">
+                    <span className="text-indigo-600 dark:text-indigo-400">α-hélice: {secStruct.helix_percent}%</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">β-lámina: {secStruct.strand_percent}%</span>
+                    <span className="text-slate-500 dark:text-slate-400">Coil (bucle): {secStruct.coil_percent}%</span>
+                  </div>
                 </div>
               )}
 

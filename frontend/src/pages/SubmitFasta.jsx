@@ -37,6 +37,42 @@ MATKAVCVLKGDGPVQGIINFEQKESNGPVKVWGSIKGLTEGLHGFHVHEFGDNTAGCTSAGPHFNPLSRKHGGPKDEER
     fasta: `>sp|P01308|INS_HUMAN Insulin OS=Homo sapiens
 MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGGPGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN`
   },
+  {
+    name: "Ubiquitin",
+    tag: "UBQ-2",
+    fasta: `>sp|P0CG47|UBQ_HUMAN Ubiquitin OS=Homo sapiens OX=9606
+MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG`
+  },
+  {
+    name: "Calmodulin-1",
+    tag: "CALM1",
+    fasta: `>sp|P0DP23|CALM1_HUMAN Calmodulin-1 OS=Homo sapiens OX=9606
+MADQLTEEQIAEFKEAFSLFDKDGDGTITTKELGTVMRSLGQNPTEAELQDMINEVDADGNGTIDFPEFLTMMARKMKDTDSEEEIREAFRVFDKDGNGYISAAELRHVMTNLGEKLTDEEVDEMIREADIDGDGQVNYEEFVQMMTAK`
+  },
+  {
+    name: "Histone H4",
+    tag: "H4",
+    fasta: `>sp|P62805|H4_HUMAN Histone H4 OS=Homo sapiens OX=9606
+SGRGKGGKGLGKGGAKRHRKVLRDNIQGITKPAIRRLARRGGVKRISGLIYEETRGVLKVFLENVIRDAVTYTEHAKRKTVTAMDVVYALKRQGRTLYGFGG`
+  },
+  {
+    name: "Cytochrome c",
+    tag: "CYC",
+    fasta: `>sp|P99999|CYC_HUMAN Cytochrome c OS=Homo sapiens OX=9606
+MGDVEKGKKIFIMKCSQCHTVEKGGKHKTGPNLHGLFGRKTGQAPGYSYTAANKNKGIIWGEDTLMEYLENPKKYIPGTKMIFVGIKKKEERADLIAYLKKATNE`
+  },
+  {
+    name: "Hemoglobin subunit alpha",
+    tag: "HBA",
+    fasta: `>sp|P69905|HBA_HUMAN Hemoglobin subunit alpha OS=Homo sapiens OX=9606
+MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHG`
+  },
+  {
+    name: "Lysozyme C",
+    tag: "LYSC",
+    fasta: `>sp|P61626|LYSC_CHICK Lysozyme C OS=Gallus gallus OX=9031
+MRSLLILVVTFLAGCSAKAKDQGNLSGAEKAVQVKVKALPDAQFEVVHSLAKWKRQTLGQHDFSAGEGLYTHMKALRPDEDRLSPLHSVYVDQWDWERVMGDGERQFSTLKSTVEAIWAGIKATEAAVSEEFGLAPFLPDQIHFVHSQELLSRYPDLDAKGRERAIAKDLGAVFLVGIGGKLSDGHRHDVRAPDYDDWSNPSELGHAFRNGYRTTDVTNRFTGVVTADTSKDKAAQGFTVQREVSPYSDVQAKD`
+  }
 ];
 
 /** Extrae un nombre legible del header FASTA.
@@ -79,7 +115,7 @@ function enrichJobWhenCompleted(jobId, cesgaJobId, proteinName) {
 
       // Opción 2: Enriquecer con datos de outputs de API
       const outputs = await getJobOutputs(cesgaJobId);
-      
+
       let updateData = {
         updatedAt: serverTimestamp(),
         organism: outputs?.organism || proteinMatch?.organism || null,
@@ -92,7 +128,7 @@ function enrichJobWhenCompleted(jobId, cesgaJobId, proteinName) {
         updateData.proteinId = proteinMatch.protein_id || null;
         updateData.pdbId = proteinMatch.pdb_id || null;
         updateData.functionalCategory = proteinMatch.category || null;
-        
+
         // Si tiene ID, obtener detalles completos
         if (proteinMatch.protein_id) {
           const fullDetails = await getProteinDetails(proteinMatch.protein_id);
@@ -149,10 +185,10 @@ export default function SubmitFasta() {
   const [customResources, setCustomResources] = useState({ cpu: "", gpu: "", memory: "", runtime: "" });
 
   const CUSTOM_LIMITS = {
-    cpu:     { min: 1,  max: 64,    unit: "cores",   label: "CPU" },
-    gpu:     { min: 0,  max: 4,     unit: "GPUs",    label: "GPU" },
-    memory:  { min: 0,  max: 256,   unit: "GB",      label: "Memoria" },
-    runtime: { min: 60, max: 86400, unit: "s",       label: "Max runtime" },
+    cpu: { min: 1, max: 64, unit: "cores", label: "CPU" },
+    gpu: { min: 0, max: 4, unit: "GPUs", label: "GPU" },
+    memory: { min: 0, max: 256, unit: "GB", label: "Memoria" },
+    runtime: { min: 60, max: 86400, unit: "s", label: "Max runtime" },
   };
 
   const customResourceWarnings = (() => {
@@ -166,7 +202,7 @@ export default function SubmitFasta() {
     }
     return warns;
   })();
-  
+
   const [jobStatus, setJobStatus] = useState(null);
   const [jobOutputs, setJobOutputs] = useState(null);
   const [jobAccounting, setJobAccounting] = useState(null);
@@ -233,7 +269,7 @@ export default function SubmitFasta() {
       let cleanBody = body.replace(/[\d\s]+/g, "").toUpperCase();
       let formattedBody = cleanBody.match(/.{1,80}/g)?.join("\n") || cleanBody;
       let finalCode = `${header}\n${formattedBody}`;
-      
+
       const invalidChars = cleanBody.match(/[*\-XBZU]/g);
       if (invalidChars) invalidChars.forEach(c => globalInvalidChars.add(c));
 
@@ -298,15 +334,15 @@ export default function SubmitFasta() {
     try {
       let gpus, cpus, memory_gb, max_runtime_seconds;
       if (resourcePreset === 'Personalizado') {
-         gpus = 1;
-         cpus = parseInt(customResources.cpu) || 8;
-         memory_gb = parseFloat(customResources.memory) || 32.0;
-         max_runtime_seconds = parseInt(customResources.runtime) || 3600;
+        gpus = 1;
+        cpus = parseInt(customResources.cpu) || 8;
+        memory_gb = parseFloat(customResources.memory) || 32.0;
+        max_runtime_seconds = parseInt(customResources.runtime) || 3600;
       } else {
-         gpus = 1;
-         cpus = parseInt(PRESET_RESOURCES[resourcePreset].cpu);
-         memory_gb = parseFloat(PRESET_RESOURCES[resourcePreset].mem);
-         max_runtime_seconds = parseInt(PRESET_RESOURCES[resourcePreset].runtime);
+        gpus = 1;
+        cpus = parseInt(PRESET_RESOURCES[resourcePreset].cpu);
+        memory_gb = parseFloat(PRESET_RESOURCES[resourcePreset].mem);
+        max_runtime_seconds = parseInt(PRESET_RESOURCES[resourcePreset].runtime);
       }
 
       let submittedJobs = [];
@@ -318,7 +354,7 @@ export default function SubmitFasta() {
         // Opción 1: Intentar buscar la proteína en el catálogo por nombre
         let catalogProtein = null;
         let enrichmentData = {};
-        
+
         if (parsedSequences.length === 1 && customName.trim()) {
           // Si el usuario dio un nombre = usar ese
           catalogProtein = await findBestProteinMatch(customName.trim(), seq.aaCount);
@@ -342,8 +378,8 @@ export default function SubmitFasta() {
         const response = await fetch("https://api-mock-cesga.onrender.com/jobs/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json", accept: "application/json" },
-          body: JSON.stringify({ 
-            fasta_sequence: seq.cleanFasta, 
+          body: JSON.stringify({
+            fasta_sequence: seq.cleanFasta,
             fasta_filename: assignedFileName,
             gpus, cpus, memory_gb, max_runtime_seconds
           }),
@@ -373,24 +409,24 @@ export default function SubmitFasta() {
             // Datos enriquecidos del catálogo
             ...enrichmentData,
           });
-          
+
           /* Enriquecer automáticamente cuando se completa */
           enrichJobWhenCompleted(jobRef.id, data.job_id, assignedName);
         }
-        
+
         submittedJobs.push(data);
       }
 
       setSubmitted(true);
-      
+
       if (parsedSequences.length === 1) {
-         setJobStatus({ id: submittedJobs[0].job_id, status: submittedJobs[0].status || "PENDING" });
-         setIsSubmitting(false);
+        setJobStatus({ id: submittedJobs[0].job_id, status: submittedJobs[0].status || "PENDING" });
+        setIsSubmitting(false);
       } else {
-         setMultiSubmitSuccess(parsedSequences.length);
-         setTimeout(() => {
-            navigate(projectId ? `/app/projects/${projectId}` : "/app/jobs");
-         }, 3000);
+        setMultiSubmitSuccess(parsedSequences.length);
+        setTimeout(() => {
+          navigate(projectId ? `/app/projects/${projectId}` : "/app/jobs");
+        }, 3000);
       }
     } catch (err) {
       console.error(err);
@@ -487,11 +523,10 @@ export default function SubmitFasta() {
                     <button
                       type="button"
                       onClick={() => setResourcePreset(preset)}
-                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150 ease-in-out border outline-none ${
-                        isSelected
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150 ease-in-out border outline-none ${isSelected
                           ? "border-[#2dd4bf] text-[#2dd4bf] bg-[rgba(45,212,191,0.07)]"
                           : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-transparent"
-                      }`}
+                        }`}
                     >
                       {label}
                     </button>
@@ -629,12 +664,11 @@ export default function SubmitFasta() {
             <div className="flex flex-col p-5 border-t border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/40">
               {/* Status Indicator */}
               <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-[10px] p-4 flex flex-col items-center justify-center">
-                <div className={`px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-2 ${
-                  jobStatus.status === 'PENDING' ? 'bg-amber-500/20 text-amber-500' :
-                  jobStatus.status === 'RUNNING' ? 'bg-blue-500/20 text-blue-400' :
-                  jobStatus.status === 'COMPLETED' ? 'bg-[#2dd4bf]/20 text-[#2dd4bf]' :
-                  jobStatus.status === 'FAILED' ? 'bg-red-500/20 text-red-500' : 'bg-slate-800 text-slate-400'
-                }`}>
+                <div className={`px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-2 ${jobStatus.status === 'PENDING' ? 'bg-amber-500/20 text-amber-500' :
+                    jobStatus.status === 'RUNNING' ? 'bg-blue-500/20 text-blue-400' :
+                      jobStatus.status === 'COMPLETED' ? 'bg-[#2dd4bf]/20 text-[#2dd4bf]' :
+                        jobStatus.status === 'FAILED' ? 'bg-red-500/20 text-red-500' : 'bg-slate-800 text-slate-400'
+                  }`}>
                   {jobStatus.status === 'RUNNING' && <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />}
                   {jobStatus.status}
                 </div>
@@ -672,51 +706,50 @@ export default function SubmitFasta() {
                     <div>
                       <h4 className="text-[11px] font-semibold text-[#64748b] tracking-[0.08em] uppercase mb-3">Estructura</h4>
                       <div className="flex flex-col gap-2.5">
-                         {(() => {
-                           const plddt = jobOutputs.structural_data?.confidence?.plddt_mean
-                             ?? jobOutputs.structural_data?.confidence?.plddt_average
-                             ?? jobOutputs.metrics?.plddt_mean
-                             ?? null;
-                           const fractions = jobOutputs.structural_data?.confidence ?? jobOutputs.metrics ?? null;
-                           return plddt != null ? (
-                             <>
-                               <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
-                                 <span className="text-xs text-slate-800 dark:text-slate-200">pLDDT medio</span>
-                                 <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                                    plddt > 90 ? 'bg-[#2dd4bf]/20 text-[#2dd4bf]' :
+                        {(() => {
+                          const plddt = jobOutputs.structural_data?.confidence?.plddt_mean
+                            ?? jobOutputs.structural_data?.confidence?.plddt_average
+                            ?? jobOutputs.metrics?.plddt_mean
+                            ?? null;
+                          const fractions = jobOutputs.structural_data?.confidence ?? jobOutputs.metrics ?? null;
+                          return plddt != null ? (
+                            <>
+                              <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
+                                <span className="text-xs text-slate-800 dark:text-slate-200">pLDDT medio</span>
+                                <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${plddt > 90 ? 'bg-[#2dd4bf]/20 text-[#2dd4bf]' :
                                     plddt >= 70 ? 'bg-blue-500/20 text-blue-400' :
-                                    plddt >= 50 ? 'bg-amber-500/20 text-amber-500' :
-                                    'bg-red-500/20 text-red-500'
-                                 }`}>
-                                   {plddt.toFixed(1)}
-                                 </span>
-                               </div>
-                               {fractions && (fractions.fraction_plddt_above_90 != null || fractions.fraction_plddt_70_to_90 != null) && (
-                                 <div className="bg-slate-50 dark:bg-slate-900/40 px-3 py-2.5 border border-slate-200 dark:border-slate-700/50 rounded-[6px] flex flex-col gap-2">
-                                   <span className="text-xs text-slate-800 dark:text-slate-200">Fracción de residuos</span>
-                                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] uppercase font-medium tracking-wider">
-                                     <span className="text-[#2dd4bf]">Muy Alta: {((fractions.fraction_plddt_above_90 ?? 0) * 100).toFixed(0)}%</span>
-                                     <span className="text-blue-400">Alta: {((fractions.fraction_plddt_70_to_90 ?? 0) * 100).toFixed(0)}%</span>
-                                     <span className="text-amber-500">Media: {((fractions.fraction_plddt_50_to_70 ?? 0) * 100).toFixed(0)}%</span>
-                                     <span className="text-red-500">Baja: {((fractions.fraction_plddt_below_50 ?? 0) * 100).toFixed(0)}%</span>
-                                   </div>
-                                 </div>
-                               )}
-                             </>
-                           ) : null;
-                         })()}
-                         {jobOutputs.derived_insights && (
-                           <>
-                             <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
-                               <span className="text-xs text-slate-800 dark:text-slate-200">Solubilidad score</span>
-                               <span className="text-xs text-slate-600 dark:text-slate-300">{jobOutputs.derived_insights.solubility_score?.toFixed(2)}</span>
-                             </div>
-                             <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
-                               <span className="text-xs text-slate-800 dark:text-slate-200">Estado estabilidad</span>
-                               <span className="text-xs text-slate-600 dark:text-slate-300 capitalize">{jobOutputs.derived_insights.stability_status}</span>
-                             </div>
-                           </>
-                         )}
+                                      plddt >= 50 ? 'bg-amber-500/20 text-amber-500' :
+                                        'bg-red-500/20 text-red-500'
+                                  }`}>
+                                  {plddt.toFixed(1)}
+                                </span>
+                              </div>
+                              {fractions && (fractions.fraction_plddt_above_90 != null || fractions.fraction_plddt_70_to_90 != null) && (
+                                <div className="bg-slate-50 dark:bg-slate-900/40 px-3 py-2.5 border border-slate-200 dark:border-slate-700/50 rounded-[6px] flex flex-col gap-2">
+                                  <span className="text-xs text-slate-800 dark:text-slate-200">Fracción de residuos</span>
+                                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] uppercase font-medium tracking-wider">
+                                    <span className="text-[#2dd4bf]">Muy Alta: {((fractions.fraction_plddt_above_90 ?? 0) * 100).toFixed(0)}%</span>
+                                    <span className="text-blue-400">Alta: {((fractions.fraction_plddt_70_to_90 ?? 0) * 100).toFixed(0)}%</span>
+                                    <span className="text-amber-500">Media: {((fractions.fraction_plddt_50_to_70 ?? 0) * 100).toFixed(0)}%</span>
+                                    <span className="text-red-500">Baja: {((fractions.fraction_plddt_below_50 ?? 0) * 100).toFixed(0)}%</span>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          ) : null;
+                        })()}
+                        {jobOutputs.derived_insights && (
+                          <>
+                            <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
+                              <span className="text-xs text-slate-800 dark:text-slate-200">Solubilidad score</span>
+                              <span className="text-xs text-slate-600 dark:text-slate-300">{jobOutputs.derived_insights.solubility_score?.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
+                              <span className="text-xs text-slate-800 dark:text-slate-200">Estado estabilidad</span>
+                              <span className="text-xs text-slate-600 dark:text-slate-300 capitalize">{jobOutputs.derived_insights.stability_status}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -724,18 +757,18 @@ export default function SubmitFasta() {
                     <div>
                       <h4 className="text-[11px] font-semibold text-[#64748b] tracking-[0.08em] uppercase mb-3">Contabilidad HPC</h4>
                       <div className="flex flex-col gap-2.5">
-                         <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
-                           <span className="text-xs text-slate-800 dark:text-slate-200">CPU Hours</span>
-                           <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.cpu_hours?.toFixed(2)} h</span>
-                         </div>
-                         <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
-                           <span className="text-xs text-slate-800 dark:text-slate-200">GPU Hours</span>
-                           <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.gpu_hours?.toFixed(2)} h</span>
-                         </div>
-                         <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
-                           <span className="text-xs text-slate-800 dark:text-slate-200">Wall Time</span>
-                           <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.wall_time_seconds} s</span>
-                         </div>
+                        <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
+                          <span className="text-xs text-slate-800 dark:text-slate-200">CPU Hours</span>
+                          <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.cpu_hours?.toFixed(2)} h</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
+                          <span className="text-xs text-slate-800 dark:text-slate-200">GPU Hours</span>
+                          <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.gpu_hours?.toFixed(2)} h</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
+                          <span className="text-xs text-slate-800 dark:text-slate-200">Wall Time</span>
+                          <span className="text-xs text-slate-600 dark:text-slate-300">{jobAccounting.wall_time_seconds} s</span>
+                        </div>
                       </div>
                     </div>
                   </div>
