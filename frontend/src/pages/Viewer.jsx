@@ -520,10 +520,8 @@ ${bioHtml}
             hideControls: true,
             bgColor: { r: 255, g: 255, b: 255 },
             hideCanvasControls: ["expand", "selection", "animation", "controlToggle", "controlInfo"],
-            visualStyle: { polymer: "cartoon", het: "ball-and-stick", water: "ball-and-stick", carbs: "ball-and-stick", nonStandard: "ball-and-stick" },
-            hideStructure: [],
-            // Activar AlphaFold view para aplicar la rampa de color por pLDDT:
-            // 💙 Azul Oscuro (>90) a 💛 Amarillo/Naranja (<50)
+            visualStyle: "cartoon",
+            // Keep AF specific parsing for the Blue->Red B-factor scale
             alphafoldView: true,
           };
 
@@ -744,109 +742,6 @@ ${bioHtml}
 
         {/* Tab content */}
         {!fetchError && <div className="flex-1 overflow-y-auto">
-
-          {activeTab === "vista" && (
-            <div className="p-4 space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-
-              {/* Componentes de la Estructura */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Componentes de Estructura</h3>
-                <div className="space-y-2 mb-6">
-                  {activeComponents.length > 0 ? (
-                    activeComponents.map((comp, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {comp.name}
-                        </span>
-                        <button
-                          onClick={() => toggleComponent(comp.key, comp.visible)}
-                          className={`px-3 py-1 text-xs rounded-md font-semibold transition-all ${comp.visible
-                            ? "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400"
-                            : "bg-slate-200 text-slate-500 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-400"
-                            }`}
-                        >
-                          {comp.visible ? "Ocultar" : "Mostrar"}
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-slate-400">Sin componentes detectados...</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Representación Visual */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Representación</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => applyVisualMode("cartoon")}
-                    className={`flex items-center justify-center py-2 px-3 text-xs font-semibold rounded-lg border transition-all ${visualMode === "cartoon"
-                      ? "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                      }`}
-                  >
-                    Cintas (Cartoon)
-                  </button>
-                  <button
-                    onClick={() => applyVisualMode("ball-and-stick")}
-                    className={`flex items-center justify-center py-2 px-3 text-xs font-semibold rounded-lg border transition-all ${visualMode === "ball-and-stick"
-                      ? "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                      }`}
-                  >
-                    Átomos y Enlaces
-                  </button>
-                  <button
-                    onClick={() => applyVisualMode("spacefill")}
-                    className={`flex items-center justify-center py-2 px-3 text-xs font-semibold rounded-lg border transition-all ${visualMode === "spacefill"
-                      ? "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                      }`}
-                  >
-                    Esferas espaciales
-                  </button>
-                  <button
-                    onClick={() => applyVisualMode("molecular-surface")}
-                    className={`flex items-center justify-center py-2 px-3 text-xs font-semibold rounded-lg border transition-all ${visualMode === "molecular-surface"
-                      ? "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                      }`}
-                  >
-                    Superficie Molecular
-                  </button>
-                </div>
-              </div>
-
-              {/* Quick Styles */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Quick Styles (Mol*)</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => applyQuickStyle("default")}
-                    className={`flex items-center justify-center py-2 px-3 text-xs font-semibold rounded-lg border transition-all ${quickStyle === "default"
-                      ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                      }`}
-                  >
-                    Default
-                  </button>
-                  <button
-                    onClick={() => applyQuickStyle("illustrative")}
-                    className={`flex items-center justify-center py-2 px-3 text-xs font-semibold rounded-lg border transition-all ${quickStyle === "illustrative"
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                      }`}
-                  >
-                    Illustrative
-                  </button>
-                </div>
-                <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  <strong>Illustrative:</strong> Añade bordes de contorno oscuro y deshabilita las sombras y oclusión, imitando gráficos científicos de revistas.
-                </p>
-              </div>
-            </div>
-          )}
 
           {activeTab === "details" && (
             <div className="p-4 space-y-4">
