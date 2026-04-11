@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { RefreshCw, CheckCircle2, Clock, XCircle, Share2, Check, Dna, GitBranch, Search, FolderOpen, X, ArrowRightLeft } from "lucide-react";
+import { RefreshCw, CheckCircle2, Clock, XCircle, Share2, Check, Dna, GitBranch, Search, FolderOpen, X, ArrowRightLeft, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db, auth } from "../lib/firebase";
-import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, getDoc, getDocs, deleteField, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, getDoc, getDocs, deleteField, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { useToast } from "../contexts/ToastContext";
-
+import { useToast } from "../contexts/ToastContext";import JobsFilterPanel from "../components/JobsFilterPanel";
 const STATUS = {
   COMPLETED: { label: "Completed", Icon: CheckCircle2, iconClass: "text-purple-500 dark:text-purple-400", badge: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50" },
   RUNNING:   { label: "Running",   Icon: GitBranch,    iconClass: "text-green-600 dark:text-green-400",   badge: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/50" },
@@ -16,6 +15,64 @@ const STATUS = {
 
 
 const AUTO_REFRESH_MS = 30_000;
+
+/* ── Modal eliminar job ── */
+function DeleteJobModal({ job, onClose, onConfirm }) {
+  const [busy, setBusy] = useState(false);
+
+  const handleDelete = async () => {
+    setBusy(true);
+    try {
+      await onConfirm(job.id);
+      onClose();
+    } catch (e) {
+      console.error(e);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xl w-full max-w-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Eliminar predicción</h2>
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[220px]">{job.proteinName}</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex items-start gap-3 p-3 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-red-900 dark:text-red-300">¿Estás seguro?</p>
+              <p className="text-xs text-red-700 dark:text-red-400 mt-1">Esta acción no se puede deshacer. Se eliminará permanentemente la predicción y todos sus datos.</p>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={busy}
+              className="flex-1 py-2 text-sm font-medium rounded-md border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={busy}
+              className="flex-1 py-2 text-sm font-semibold rounded-md bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white transition-colors"
+            >
+              {busy ? "Eliminando…" : "Eliminar"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ── Modal reasignar job entre proyectos ── */
 function MoveJobModal({ job, userId, onClose }) {
@@ -140,6 +197,17 @@ export default function JobsList() {
   const [sortKey,    setSortKey]    = useState("date_desc");
   const [sortOpen,   setSortOpen]   = useState(false);
   const [moveJob,    setMoveJob]    = useState(null); // job a reasignar
+  const [deleteJob,  setDeleteJob]  = useState(null); // job a eliminar
+  
+  /* Nuevos estados para filtrado */
+  const [projects, setProjects] = useState([]);
+  const [filters, setFilters] = useState({
+    projects: [],
+    categories: [],
+    includeNoProject: false,
+    maxLength: null,
+    textSearch: "",
+  });
 
   /* projectId → name cache (fallback para jobs creados antes del snapshot) */
   const [projectNames, setProjectNames] = useState({});
@@ -209,6 +277,16 @@ export default function JobsList() {
     return () => unsub();
   }, [userId]);
 
+  /* ── Cargar proyectos del usuario para el filtro ── */
+  useEffect(() => {
+    if (!userId) return;
+    getDocs(query(collection(db, "projects"), where("memberIds", "array-contains", userId)))
+      .then((snap) => {
+        setProjects(snap.docs.map((d) => ({ id: d.id, name: d.data().name })));
+      })
+      .catch((e) => console.error("Error loading projects:", e));
+  }, [userId]);
+
   /* ── Auto-refresh CESGA statuses every 30s ── */
   const refreshCesgaStatuses = async (currentJobs) => {
     const pending = currentJobs.filter((j) => j.status !== "COMPLETED" && j.status !== "FAILED");
@@ -255,10 +333,26 @@ export default function JobsList() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  /* ── Derived list ── */
+  const handleDelete = async (jobId) => {
+    try {
+      const jobSnap = await getDoc(doc(db, "jobs", jobId));
+      const jobName = jobSnap.data()?.proteinName || "Predicción";
+      
+      await deleteDoc(doc(db, "jobs", jobId));
+      
+      addToast(`✗ "${jobName}" ha sido eliminada.`, "success");
+    } catch (e) {
+      console.error("Error deleting job:", e);
+      addToast("Error al eliminar la predicción", "error");
+      throw e;
+    }
+  };
+
+  /* ── Derived list with filtering ── */
   const visible = useMemo(() => {
     let list = [...jobs];
     
+    /* Filtro de búsqueda original */
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((j) =>
@@ -268,9 +362,38 @@ export default function JobsList() {
       );
     }
     
+    /* Filtro de proyecto (incluyendo sin proyecto) */
+    if (filters.projects.length > 0 || filters.includeNoProject) {
+      list = list.filter((j) => {
+        if (filters.includeNoProject && !j.projectId) return true;
+        if (filters.projects.includes(j.projectId)) return true;
+        return false;
+      });
+    }
+    
+    /* Filtro de categoría funcional (múltiples) */
+    if (filters.categories.length > 0) {
+      list = list.filter((j) => filters.categories.includes(j.functionalCategory));
+    }
+    
+    /* Filtro de longitud máxima de aa */
+    if (filters.maxLength) {
+      list = list.filter((j) => (j.aaLength ?? 0) <= filters.maxLength);
+    }
+    
+    /* Filtro de búsqueda por nombre/organismo/tags */
+    if (filters.textSearch.trim()) {
+      const q = filters.textSearch.toLowerCase();
+      list = list.filter((j) =>
+        j.proteinName?.toLowerCase().includes(q) ||
+        j.organism?.toLowerCase().includes(q) ||
+        (j.tags && j.tags.some(tag => tag.toLowerCase().includes(q)))
+      );
+    }
+    
     list.sort((a, b) => b._ts - a._ts);
     return list;
-  }, [jobs, search, projectNames]);
+  }, [jobs, search, projectNames, filters]);
 
   return (
     <div className="max-w-4xl mx-auto px-5 py-8 w-full">
@@ -308,6 +431,14 @@ export default function JobsList() {
           />
         </div>
       </div>
+
+      {/* Filter Panel */}
+      <JobsFilterPanel
+        jobs={jobs}
+        projects={projects}
+        onFiltersChange={setFilters}
+        initialFilters={filters}
+      />
 
       {/* Main panel */}
       <div className="rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden">
@@ -377,6 +508,62 @@ export default function JobsList() {
                           </button>
                         )}
                       </div>
+                      
+                      {/* Additional info row: category, organism, tags */}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        {/* Category badge */}
+                        {job.functionalCategory && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            🏷️ {job.functionalCategory}
+                          </span>
+                        )}
+                        
+                        {/* Organism badge */}
+                        {job.organism && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                            🧬 {job.organism.split(" ").slice(0, 2).join(" ")}
+                          </span>
+                        )}
+                        
+                        {/* AA Length info */}
+                        {job.aaLength && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
+                            ⚖️ {job.aaLength} aa
+                          </span>
+                        )}
+                        
+                        {/* PDB ID if available */}
+                        {job.pdbId && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                            🔗 {job.pdbId}
+                          </span>
+                        )}
+                        
+                        {/* Tags */}
+                        {job.tags && job.tags.length > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                            {job.tags.slice(0, 2).join(", ")}{job.tags.length > 2 ? "..." : ""}
+                          </span>
+                        )}
+                        
+                        {/* Molecular Weight if available */}
+                        {job.molecularWeight != null && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
+                            ⚛️ {job.molecularWeight} kDa
+                          </span>
+                        )}
+                        
+                        {/* pLDDT badge if available */}
+                        {job.plddt != null && (
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border ${
+                            job.plddt >= 90 ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" :
+                            job.plddt >= 70 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800" :
+                            "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
+                          }`}>
+                            📊 pLDDT {job.plddt.toFixed(1)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -415,6 +602,13 @@ export default function JobsList() {
                         Ver 3D
                       </button>
                     )}
+                    <button
+                      onClick={() => setDeleteJob(job)}
+                      title="Eliminar predicción"
+                      className="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </li>
               );
@@ -434,6 +628,14 @@ export default function JobsList() {
           job={moveJob}
           userId={userId}
           onClose={() => setMoveJob(null)}
+        />
+      )}
+
+      {deleteJob && (
+        <DeleteJobModal
+          job={deleteJob}
+          onClose={() => setDeleteJob(null)}
+          onConfirm={handleDelete}
         />
       )}
     </div>
