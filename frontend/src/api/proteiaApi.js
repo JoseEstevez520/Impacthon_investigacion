@@ -55,31 +55,35 @@ export const proteiaApi = {
       const bio = proteinContext.biological;
       const contextSummary = `DATOS DE LA PROTEÍNA:\n- Nombre: ${proteinContext.name}\n- pLDDT: ${proteinContext.plddt}\n- Organismo: ${proteinContext.organism}\n- UniProt: ${proteinContext.uniprot}\n- Solubilidad: ${bio?.solubility_score}/100\n- Inestabilidad: ${bio?.instability_index}`;
 
+      const payload = {
+        session_id: `job_${jobId}`,
+        question: message,  
+        chatInput: message,
+        context_summary: contextSummary,
+        history: chatHistory.map((m) => ({
+          role: m.role === "ai" ? "assistant" : "user",
+          content: m.text,
+        })),
+        protein_context: {
+          job_id: jobId,
+          protein_name: proteinContext.name || "Proteína desconocida",
+          plddt: proteinContext.plddt || null,
+          organism: proteinContext.organism || null,
+          uniprot: proteinContext.uniprot || null,
+          solubility: bio?.solubility_score || null,
+          instability: bio?.instability_index || null,
+          toxicity_alerts: bio?.toxicity_alerts || [],
+          secondary_structure: bio?.secondary_structure_prediction || null,
+          sequence_properties: bio?.sequence_properties || null,
+        },
+      };
+
+      console.log("ProteIA API enviando payload:", payload);
+
       const response = await fetch(PROTEIA_CHAT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: `job_${jobId}`,
-          question: message,  
-          chatInput: message,
-          context_summary: contextSummary, // <--- Este campo es un STRING, no da [object Object]
-          history: chatHistory.map((m) => ({
-            role: m.role === "ai" ? "assistant" : "user",
-            content: m.text,
-          })),
-          protein_context: {
-            job_id: jobId,
-            protein_name: proteinContext.name || "Proteína desconocida",
-            plddt: proteinContext.plddt || null,
-            organism: proteinContext.organism || null,
-            uniprot: proteinContext.uniprot || null,
-            solubility: bio?.solubility_score || null,
-            instability: bio?.instability_index || null,
-            toxicity_alerts: bio?.toxicity_alerts || [],
-            secondary_structure: bio?.secondary_structure_prediction || null,
-            sequence_properties: bio?.sequence_properties || null,
-          },
-        }),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
