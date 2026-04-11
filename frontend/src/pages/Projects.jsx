@@ -7,7 +7,7 @@ import {
 import { onAuthStateChanged } from "firebase/auth";
 import {
   Plus, Users, Mail, Check, X, ChevronRight, Dna, Send,
-  FolderOpen, Crown, UserPlus, Clock, Search, Filter,
+  FolderOpen, Crown, UserPlus, Clock, Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
