@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { UploadCloud, CheckCircle2, AlertTriangle, FlaskConical, Dna, ArrowRight, FolderOpen } from "lucide-react";
+import { UploadCloud, CheckCircle2, AlertTriangle, FlaskConical, Dna, ArrowRight, FolderOpen, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { db, auth } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from "firebase/firestore";
+import { getJobOutputs } from "../lib/outputsCache";
+import { searchProteins, getProteinDetails, findBestProteinMatch, extractProteinMetadata } from "../api/proteinsApi";
 
 const PROTEIN_SAMPLES = [
   {
@@ -65,6 +67,71 @@ function parseFastaName(header) {
   return raw.length > 60 ? raw.slice(0, 60) + "…" : raw;
 }
 
+const FUNCTIONAL_CATEGORIES = [
+  "enzyme",
+  "transport",
+  "signaling",
+  "immune",
+  "hormone",
+  "reporter",
+  "structural",
+  "oncology",
+  "dna-replication",
+];
+
+const COMMON_TAGS = ["calcium", "human", "fluorescent", "structural", "antimicrobial", "therapeutic"];
+
+function enrichJobWhenCompleted(jobId, cesgaJobId, proteinName) {
+  setTimeout(async () => {
+    try {
+      // Opción 1: Buscar en catálogo por nombre (si no se hizo antes)
+      let proteinMatch = null;
+      if (proteinName) {
+        proteinMatch = await findBestProteinMatch(proteinName, null);
+      }
+
+      // Opción 2: Enriquecer con datos de outputs de API
+      const outputs = await getJobOutputs(cesgaJobId);
+      
+      let updateData = {
+        updatedAt: serverTimestamp(),
+        organism: outputs?.organism || proteinMatch?.organism || null,
+        uniprotId: outputs?.uniprot || proteinMatch?.uniprot_id || null,
+        plddt: outputs?.plddt ?? null,
+      };
+
+      // Si encontramos la proteína en el catálogo, agregar más información
+      if (proteinMatch) {
+        updateData.proteinId = proteinMatch.protein_id || null;
+        updateData.pdbId = proteinMatch.pdb_id || null;
+        updateData.category = proteinMatch.category || null;
+        
+        // Si tiene ID, obtener detalles completos
+        if (proteinMatch.protein_id) {
+          const fullDetails = await getProteinDetails(proteinMatch.protein_id);
+          if (fullDetails) {
+            const metadata = extractProteinMetadata(fullDetails);
+            updateData = { ...updateData, ...metadata };
+          }
+        }
+      }
+
+      // Si tenemos outputs con identified_protein, obtener detalles por ID
+      if (outputs?.identified_protein) {
+        const proteinDetails = await getProteinDetails(outputs.identified_protein);
+        if (proteinDetails) {
+          const metadata = extractProteinMetadata(proteinDetails);
+          updateData = { ...updateData, ...metadata };
+        }
+      }
+
+      await updateDoc(doc(db, "jobs", jobId), updateData);
+    } catch (e) {
+      console.error("Error enriqueciendo job:", e);
+    }
+  }, 2000);
+}
+
 export default function SubmitFasta() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -75,6 +142,10 @@ export default function SubmitFasta() {
   const [sequenceWarnings, setSequenceWarnings] = useState([]);
   const [parsedSequences, setParsedSequences] = useState([]);
   const [multiSubmitSuccess, setMultiSubmitSuccess] = useState(0);
+
+  /* Nuevos campos para filtrado */
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedTags, setSelectedTags] = useState([]);
 
   /* Load project name if coming from a project */
   useEffect(() => {
@@ -258,6 +329,30 @@ export default function SubmitFasta() {
         const seq = parsedSequences[i];
         const assignedFileName = (parsedSequences.length === 1 && customName.trim() ? customName.trim() : seq.name) + ".fasta";
 
+        // Opción 1: Intentar buscar la proteína en el catálogo por nombre
+        let catalogProtein = null;
+        let enrichmentData = {};
+        
+        if (parsedSequences.length === 1 && customName.trim()) {
+          // Si el usuario dio un nombre = usar ese
+          catalogProtein = await findBestProteinMatch(customName.trim(), seq.aaCount);
+        } else {
+          // Si no, usar el nombre parseado del FASTA
+          catalogProtein = await findBestProteinMatch(seq.name, seq.aaCount);
+        }
+
+        // Si encontramos una coincidencia, preparar datos de enriquecimiento
+        if (catalogProtein) {
+          enrichmentData = {
+            proteinId: catalogProtein.protein_id || null,
+            uniprot: catalogProtein.uniprot_id || null,
+            pdbId: catalogProtein.pdb_id || null,
+            category: catalogProtein.category || selectedCategory || null,
+            organism: catalogProtein.organism || null,
+            molecularWeight: catalogProtein.molecular_weight_kda || null,
+          };
+        }
+
         const response = await fetch("https://api-mock-cesga.onrender.com/jobs/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json", accept: "application/json" },
@@ -279,7 +374,7 @@ export default function SubmitFasta() {
         const assignedName = parsedSequences.length === 1 && customName.trim() ? customName.trim() : fallbackName;
 
         if (auth.currentUser) {
-          await addDoc(collection(db, "jobs"), {
+          const jobRef = await addDoc(collection(db, "jobs"), {
             userId: auth.currentUser.uid,
             cesgaJobId: data.job_id,
             proteinName: assignedName,
@@ -287,8 +382,16 @@ export default function SubmitFasta() {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             fastaContent: seq.cleanFasta,
+            aaLength: seq.aaCount,
+            ...(selectedCategory ? { functionalCategory: selectedCategory } : {}),
+            ...(selectedTags.length > 0 ? { tags: selectedTags } : {}),
             ...(projectId ? { projectId, ...(projectName ? { projectName } : {}) } : {}),
+            // Datos enriquecidos del catálogo
+            ...enrichmentData,
           });
+          
+          /* Enriquecer automáticamente cuando se completa */
+          enrichJobWhenCompleted(jobRef.id, data.job_id, assignedName);
         }
         
         submittedJobs.push(data);
@@ -496,6 +599,60 @@ export default function SubmitFasta() {
           </div>
 
 
+
+          {/* Categoría y Tags */}
+          <div className="px-4 py-5 bg-white dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-700/50">
+            <h3 className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-[0.08em] uppercase mb-3">
+              Información adicional (opcional)
+            </h3>
+
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Categoría Funcional */}
+              <div className="flex-1">
+                <label className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-medium mb-1.5 block">Categoría Funcional</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-600 focus:border-[#3b82f6] rounded-[6px] px-3 py-2 text-sm outline-none text-slate-800 dark:text-slate-200 transition-colors duration-150"
+                >
+                  <option value="">Sin categoría</option>
+                  {FUNCTIONAL_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat} className="capitalize">
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tags */}
+              <div className="flex-1">
+                <label className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-medium mb-1.5 block">Tags (separados por coma)</label>
+                <input
+                  type="text"
+                  placeholder="calcium, human, fluorescent..."
+                  value={selectedTags.join(", ")}
+                  onChange={(e) => setSelectedTags(e.target.value.split(",").map(t => t.trim()).filter(Boolean))}
+                  className="w-full bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-600 focus:border-[#3b82f6] rounded-[6px] px-3 py-2 text-sm outline-none text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-colors duration-150"
+                />
+                {selectedTags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {selectedTags.map((tag, idx) => (
+                      <div key={idx} className="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTags(selectedTags.filter((_, i) => i !== idx))}
+                          className="ml-1 hover:text-blue-900 dark:hover:text-blue-100"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* FASTA textarea */}
           <div className="relative">
