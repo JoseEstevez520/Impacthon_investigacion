@@ -332,7 +332,7 @@ export default function SubmitFasta() {
             proteinId: catalogProtein.protein_id || null,
             uniprot: catalogProtein.uniprot_id || null,
             pdbId: catalogProtein.pdb_id || null,
-            functionalCategory: catalogProtein.category || null,
+            category: catalogProtein.category || null,
             organism: catalogProtein.organism || null,
             molecularWeight: catalogProtein.molecular_weight_kda || null,
           };
