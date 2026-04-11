@@ -291,8 +291,9 @@ export default function SubmitFasta() {
             proteinName: assignedName,
             status: data.status || "PENDING",
             createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
             fastaContent: seq.cleanFasta,
-            ...(projectId ? { projectId } : {}),
+            ...(projectId ? { projectId, ...(projectName ? { projectName } : {}) } : {}),
           });
         }
         
