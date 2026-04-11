@@ -4,6 +4,8 @@ import Layout from "./components/Layout";
 import Viewer from "./pages/Viewer";
 import SubmitFasta from "./pages/SubmitFasta";
 import JobsList from "./pages/JobsList";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import Landing from "./pages/Landing";
 
 function App() {
@@ -18,6 +20,8 @@ function App() {
           <Route index element={<Viewer />} />
           <Route path="submit" element={<SubmitFasta />} />
           <Route path="jobs" element={<JobsList />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="projects/:id" element={<ProjectDetail />} />
         </Route>
       </Routes>
     </BrowserRouter>

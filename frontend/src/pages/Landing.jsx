@@ -113,7 +113,7 @@ export default function Landing() {
                 step: "03",
                 icon: <Eye className="w-6 h-6" />,
                 title: "Analiza los resultados",
-                desc: "Visor 3D interactivo, heatmap PAE y el Bio-Copilot IA que traduce los datos técnicos a conclusiones biológicas accionables.",
+                desc: "Visor 3D interactivo, heatmap PAE y Proteia — la IA conversacional que traduce los datos técnicos a conclusiones biológicas accionables.",
                 color: "text-emerald-400"
               }
             ].map((item) => (
@@ -141,8 +141,8 @@ export default function Landing() {
             />
             <FeatureCard 
               icon={<Bot className="w-6 h-6 text-emerald-400" />}
-              title="Protein Copilot IA"
-              desc="Un asistente conversacional nativo lee las métricas (pLDDT, solubilidad) y te traduce la ciencia al lenguaje de laboratorio."
+              title="Proteia"
+              desc="Proteia lee las métricas (pLDDT, solubilidad) y te traduce la ciencia al lenguaje de laboratorio con respuestas conversacionales."
             />
             <FeatureCard 
               icon={<Share2 className="w-6 h-6 text-blue-400" />}

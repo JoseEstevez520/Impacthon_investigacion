@@ -1,11 +1,17 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, forwardRef } from 'react';
 
 /**
  * Renders an N x N matrix as an HTML Canvas Heatmap.
  * For AlphaFold PAE: lower error -> dark blue/green. higher error -> white/red/yellow.
  */
-export default function PAEHeatmap({ matrix, className = "" }) {
+const PAEHeatmap = forwardRef(function PAEHeatmap({ matrix, className = "" }, forwardedRef) {
   const canvasRef = useRef(null);
+
+  const setRef = (el) => {
+    canvasRef.current = el;
+    if (typeof forwardedRef === "function") forwardedRef(el);
+    else if (forwardedRef) forwardedRef.current = el;
+  };
 
   useEffect(() => {
     if (!matrix || !matrix.length || !canvasRef.current) return;
@@ -81,10 +87,12 @@ export default function PAEHeatmap({ matrix, className = "" }) {
   }
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      className={`image-pixelated rounded outline outline-1 outline-slate-200 dark:outline-slate-700 shadow-sm ${className}`} 
+    <canvas
+      ref={setRef}
+      className={`image-pixelated rounded outline outline-1 outline-slate-200 dark:outline-slate-700 shadow-sm ${className}`}
       style={{ imageRendering: 'pixelated' }}
     />
   );
-}
+});
+
+export default PAEHeatmap;

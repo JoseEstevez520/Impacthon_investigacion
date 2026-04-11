@@ -5,6 +5,34 @@
 const N8N_CHAT_URL = "https://n8n-n8n.yaqvsc.easypanel.host/webhook/protein-chat";
 const N8N_SUMMARY_URL = "https://n8n-n8n.yaqvsc.easypanel.host/webhook/protein-summary";
 
+/**
+ * Extrae solo los campos relevantes para el análisis IA.
+ * IMPORTANTE: excluye pdbFileUrl y paeMatrix para no superar el límite de tokens del LLM.
+ */
+function buildMetricsPayload(statusData) {
+  if (!statusData) return {};
+  return {
+    name: statusData.name || null,
+    plddt: statusData.plddt || null,
+    organism: statusData.organism || null,
+    uniprot: statusData.uniprot || null,
+    biological: statusData.biological
+      ? {
+          solubility_score: statusData.biological.solubility_score ?? null,
+          solubility_prediction: statusData.biological.solubility_prediction ?? null,
+          instability_index: statusData.biological.instability_index ?? null,
+          stability_status: statusData.biological.stability_status ?? null,
+          toxicity_alerts: statusData.biological.toxicity_alerts ?? [],
+          allergenicity_alerts: statusData.biological.allergenicity_alerts ?? [],
+          secondary_structure_prediction: statusData.biological.secondary_structure_prediction ?? null,
+          sequence_properties: statusData.biological.sequence_properties ?? null,
+        }
+      : null,
+    plddtHistogram: statusData.plddtHistogram || null,
+    // pdbFileUrl y paeMatrix se excluyen deliberadamente — son demasiado grandes para el LLM
+  };
+}
+
 export const copilotApi = {
   /**
    * Obtiene un resumen inicial de la proteína analizada
@@ -17,7 +45,7 @@ export const copilotApi = {
         body: JSON.stringify({
           job_id: jobId,
           protein_name: proteinName,
-          metrics: statusData // Le pasamos pLDDT, etc.
+          metrics: buildMetricsPayload(statusData)
         })
       });
       if (!response.ok) throw new Error("Error en el resumen de n8n");
@@ -53,7 +81,10 @@ export const copilotApi = {
             organism: proteinContext.organism || null,
             uniprot: proteinContext.uniprot || null,
             solubility: proteinContext.biological?.solubility_score || null,
-            instability: proteinContext.biological?.instability_index || null
+            instability: proteinContext.biological?.instability_index || null,
+            toxicity_alerts: proteinContext.biological?.toxicity_alerts || [],
+            secondary_structure: proteinContext.biological?.secondary_structure_prediction || null,
+            sequence_properties: proteinContext.biological?.sequence_properties || null,
           }
         })
       });
