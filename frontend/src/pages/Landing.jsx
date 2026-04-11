@@ -6,6 +6,7 @@ import {
   Server, Check, Users, BrainCircuit, FolderOpen, Bell,
   FlaskConical, AtSign, Shield, BarChart3,
 } from "lucide-react";
+import logoUrl from "../assets/logo.png";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function Landing() {
       {/* Navbar */}
       <nav className="flex justify-between items-center p-6 lg:px-12 border-b border-white/5 sticky top-0 bg-slate-950/80 backdrop-blur-md z-50">
         <div className="flex items-center gap-2">
-          <Dna className="w-8 h-8 text-primary-500" />
+          <img src={logoUrl} className="w-8 h-8 object-contain" alt="LocalFold" />
           <span className="text-xl font-bold tracking-tight text-white">Local<span className="text-primary-500">Fold</span></span>
         </div>
         <button

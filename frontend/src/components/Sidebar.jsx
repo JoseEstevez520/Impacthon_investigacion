@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import logoUrl from "../assets/logo.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Activity, Dna, LayoutDashboard, Sun, Moon, FolderOpen, Mail, LogOut, ChevronLeft, ChevronRight, BrainCircuit } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
@@ -59,14 +60,15 @@ export default function Sidebar() {
         {isOpen ? (
           <Link
             to="/"
-            className="font-bold text-base text-primary-600 dark:text-primary-400 whitespace-nowrap tracking-tight hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
+            className="flex items-center gap-2 font-bold text-base text-primary-600 dark:text-primary-400 whitespace-nowrap tracking-tight hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
             title="Ir a la página de inicio"
           >
+            <img src={logoUrl} className="w-6 h-6 object-contain" alt="LocalFold" />
             LocalFold
           </Link>
         ) : (
-          <Link to="/" title="Página de inicio" className="text-primary-500 hover:text-primary-400 transition-colors">
-            <Dna className="w-5 h-5" />
+          <Link to="/" title="Página de inicio">
+            <img src={logoUrl} className="w-6 h-6 object-contain" alt="LocalFold" />
           </Link>
         )}
         <button
