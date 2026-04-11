@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import logoUrl from "../assets/logo.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Activity, Dna, LayoutDashboard, Sun, Moon, FolderOpen, Mail, LogOut, ChevronLeft, ChevronRight, BrainCircuit } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
@@ -55,23 +56,20 @@ export default function Sidebar() {
       }`}
     >
       {/* Logo + collapse toggle */}
-      <div className={`flex items-center h-14 border-b border-slate-200 dark:border-slate-700 ${isOpen ? "px-4 justify-between" : "flex-col justify-center gap-1"}`}>
-        {isOpen ? (
+      <div className="flex items-center justify-between h-14 px-3 border-b border-slate-200 dark:border-slate-700">
+        {isOpen && (
           <Link
             to="/"
-            className="font-bold text-base text-primary-600 dark:text-primary-400 whitespace-nowrap tracking-tight hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
+            className="flex items-center gap-2 font-bold text-base text-primary-600 dark:text-primary-400 whitespace-nowrap tracking-tight hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
             title="Ir a la página de inicio"
           >
+            <img src={logoUrl} className="w-6 h-6 object-contain" alt="LocalFold" />
             LocalFold
-          </Link>
-        ) : (
-          <Link to="/" title="Página de inicio" className="text-primary-500 hover:text-primary-400 transition-colors">
-            <Dna className="w-5 h-5" />
           </Link>
         )}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors"
+          className={`p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors ${!isOpen ? "mx-auto" : ""}`}
           title={isOpen ? "Colapsar" : "Expandir"}
         >
           {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
