@@ -8,15 +8,15 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
-  const location  = useLocation();
-  const navigate  = useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [pendingInvites, setPendingInvites] = useState(0);
   const [user, setUser] = useState(null);
 
   /* Auth + pending invitations */
   useEffect(() => {
-    let unsubInvites = () => {};
+    let unsubInvites = () => { };
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u || null);
       unsubInvites();
@@ -37,11 +37,11 @@ export default function Sidebar() {
   };
 
   const links = [
-    { name: "Visor 3D",      path: "/app",               icon: <Activity className="w-5 h-5" /> },
-    { name: "Nuevo Trabajo", path: "/app/submit",        icon: <Dna className="w-5 h-5" /> },
-    { name: "Mis Trabajos",  path: "/app/jobs",          icon: <LayoutDashboard className="w-5 h-5" /> },
-    { name: "Proyectos",     path: "/app/projects",      icon: <FolderOpen className="w-5 h-5" />, badge: pendingInvites },
-    { name: "ProteIA",        path: "/app/assistant",     icon: <BrainCircuit className="w-5 h-5" /> },
+    { name: "Visor 3D", path: "/app", icon: <Activity className="w-5 h-5" /> },
+    { name: "Nuevo Trabajo", path: "/app/submit", icon: <Dna className="w-5 h-5" /> },
+    { name: "Mis Trabajos", path: "/app/jobs", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: "Proyectos", path: "/app/projects", icon: <FolderOpen className="w-5 h-5" />, badge: pendingInvites },
+    { name: "ProteIA", path: "/app/assistant", icon: <BrainCircuit className="w-5 h-5" /> },
   ];
 
   const initials = user?.displayName
@@ -50,9 +50,8 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`relative h-full flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 shrink-0 ${
-        isOpen ? "w-56" : "w-14"
-      }`}
+      className={`relative h-full flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 shrink-0 ${isOpen ? "w-56" : "w-14"
+        }`}
     >
       {/* Logo + collapse toggle */}
       <div className={`flex items-center h-14 border-b border-slate-200 dark:border-slate-700 ${isOpen ? "px-4 justify-between" : "flex-col justify-center gap-1"}`}>
@@ -87,11 +86,10 @@ export default function Sidebar() {
               key={link.path}
               to={link.path}
               title={!isOpen ? link.name : undefined}
-              className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors ${
-                isActive
+              className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors ${isActive
                   ? "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 pointer-events-none"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-slate-100"
-              }`}
+                }`}
             >
               <div className={`relative shrink-0 ${isActive ? "text-primary-600 dark:text-primary-400" : ""}`}>
                 {link.icon}
