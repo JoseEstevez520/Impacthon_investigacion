@@ -21,11 +21,21 @@ function formatContextAsText(references) {
       return lines.join("\n");
     }
     if (r.type === "project") {
-      return [
+      const jobLines = (r.jobs || []).map((j) =>
+        `    · ${j.proteinName || j.jobId} [${j.status}]${
+          j.plddt != null ? ` · pLDDT: ${j.plddt}` : ""
+        }${j.organism ? ` · ${j.organism}` : ""}`
+      );
+      const lines = [
         `[PROYECTO: ${r.name}]`,
         r.description ? `  - Descripción: ${r.description}` : null,
         `  - Miembros: ${r.memberCount}`,
-      ].filter(Boolean).join("\n");
+        r.jobs?.length
+          ? `  - Predicciones (${r.jobs.length}):`
+          : "  - Sin predicciones registradas",
+        ...jobLines,
+      ].filter(Boolean);
+      return lines.join("\n");
     }
     return JSON.stringify(r);
   }).join("\n\n");
@@ -40,7 +50,11 @@ export const ragApi = {
         body: JSON.stringify({
           sessionId,
           chatInput: message,
-          history: chatHistory.map((m) => ({ role: m.role, content: m.text })),
+          // Normalize "ai" → "assistant" for LLM compatibility
+          history: chatHistory.map((m) => ({
+            role: m.role === "ai" ? "assistant" : m.role,
+            content: m.text,
+          })),
           context: references,
           contextText: formatContextAsText(references),
         }),
