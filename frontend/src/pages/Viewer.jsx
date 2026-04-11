@@ -25,7 +25,96 @@ export default function Viewer() {
   const [retryKey, setRetryKey] = useState(0);
   const isDragging = useRef(false);
 
-  const handleResizeStart = (e) => {
+  const [quickStyle, setQuickStyle] = useState("default");
+  const [visualMode, setVisualMode] = useState("cartoon");
+  const [activeComponents, setActiveComponents] = useState([]);
+
+  const toggleComponent = (compKey, currentVisibility) => {
+    if (!viewerInstanceRef.current) return;
+    const newVisibility = !currentVisibility;
+
+    try {
+      viewerInstanceRef.current.visual.visibility({
+        [compKey]: newVisibility
+      });
+      // Actualiza el UI local
+      setActiveComponents(prev => prev.map(c =>
+        c.key === compKey ? { ...c, visible: newVisibility } : c
+      ));
+    } catch (e) {
+      console.warn("No se pudo cambiar la visibilidad del componente", e);
+    }
+  };
+
+  const applyVisualMode = async (mode) => {
+    if (!viewerInstanceRef.current || !viewerInstanceRef.current.plugin) return;
+    setVisualMode(mode);
+    try {
+      const viewer = viewerInstanceRef.current;
+      const plugin = viewer.plugin;
+      // Obtenemos la referencia de la estructura según la jerarquía de Mol*
+      const structRef = viewer.assemblyRef
+        || (plugin.managers.structure.hierarchy.selection.structures.length > 0 && plugin.managers.structure.hierarchy.selection.structures[0].cell.transform.ref)
+        || (viewer.structureRefMap && viewer.structureRefMap.get('main'))
+        || (viewer.structureRefMap && viewer.structureRefMap.get('model'));
+
+      // Intentamos usar el método interno de clase nativo que aplica estilos al momento sin recargar
+      if (structRef && typeof viewer.applyVisualStyles === 'function') {
+        await viewer.applyVisualStyles(structRef, mode);
+      } else {
+        // Opción de retroceso (fallback) si falta el contexto, recargando suavemente los parámetros
+        viewer.visual.update({
+          ...viewer.initParams,
+          visualStyle: mode
+        }, true);
+      }
+    } catch (e) {
+      console.warn("No se pudo aplicar el modo visual", e);
+    }
+  };
+
+  const applyQuickStyle = (style) => {
+    if (!viewerInstanceRef.current || !viewerInstanceRef.current.plugin) return;
+    const plugin = viewerInstanceRef.current.plugin;
+    setQuickStyle(style);
+
+    try {
+      if (style === "illustrative") {
+        plugin.canvas3d.setProps({
+          postprocessing: {
+            ...plugin.canvas3d.props.postprocessing,
+            outline: {
+              name: "on",
+              params: { scale: 1, threshold: 0.33, color: 0x000000, includeTransparent: true }
+            },
+            occlusion: { name: "off", params: {} },
+            shadow: { name: "off", params: {} }
+          }
+        });
+      } else {
+        // "default"
+        plugin.canvas3d.setProps({
+          postprocessing: {
+            ...plugin.canvas3d.props.postprocessing,
+            outline: { name: "off", params: {} },
+            occlusion: {
+              name: "on",
+              params: {
+                samples: 32, radius: 5, bias: 0.8, blurKernelSize: 15, resolutionScale: 1,
+                colorTheme: { name: 'black' },
+                multiScale: { name: 'off', params: {} } // <- Force multiScale value to avoid undefined crash
+              }
+            },
+            shadow: { name: "off", params: {} }
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("No se pudo aplicar el quick style", e);
+    }
+  };
+
+  const handleResizeStart = () => {
     isDragging.current = true;
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
@@ -90,8 +179,10 @@ export default function Viewer() {
   // Pre-carga del resumen IA en cuanto llegan los datos del job (no esperar al clic)
   useEffect(() => {
     if (!jobId || !jobData || aiSummary) return;
-    proteiaApi.getInitialSummary(jobId, jobData.name, jobData).then(setAiSummary);
-  }, [jobId, jobData]);
+    proteiaApi.getInitialSummary(jobId, jobData.name, jobData)
+      .then(setAiSummary)
+      .catch(() => { /* Silenciado intencionadamente si la IA no está respondiendo */ });
+  }, [jobId, jobData, aiSummary]);
 
   const handleDownloadReport = async () => {
     // Esperar resumen IA si aún no ha llegado
@@ -109,7 +200,7 @@ export default function Viewer() {
     // Capturar PAE como base64 antes de abrir la ventana
     let paeDataUrl = null;
     if (paeReportRef.current) {
-      try { paeDataUrl = paeReportRef.current.toDataURL("image/png"); } catch (_) {}
+      try { paeDataUrl = paeReportRef.current.toDataURL("image/png"); } catch (error) { console.warn("PAE no capturable", error); }
     }
 
     // Intentar capturar la molécula (WebGL — puede salir en blanco si el driver no preserva el buffer)
@@ -119,7 +210,7 @@ export default function Viewer() {
       try {
         const d = molCanvas.toDataURL("image/png");
         if (d && d.length > 200 && d !== "data:,") molDataUrl = d;
-      } catch (_) {}
+      } catch (error) { console.warn("MolCanvas no capturable", error); }
     }
 
     const plddt = jobData?.plddt ?? 0;
@@ -128,16 +219,16 @@ export default function Viewer() {
     const plddtDesc = plddt >= 90
       ? "La forma global es muy fiable. Adecuada para estudios de docking y diseño racional."
       : plddt >= 70
-      ? "Predicción utilizable para análisis estructural. Las regiones con pLDDT &lt; 70 deben interpretarse con cautela."
-      : "Confianza baja. Úsala únicamente como referencia orientativa.";
+        ? "Predicción utilizable para análisis estructural. Las regiones con pLDDT &lt; 70 deben interpretarse con cautela."
+        : "Confianza baja. Úsala únicamente como referencia orientativa.";
 
     const bio = jobData?.biological;
     const solScore = bio?.solubility_score;
     const instIdx = bio?.instability_index;
     const solLabel = solScore == null ? null
       : solScore >= 70 ? "Alta — apta para uso en laboratorio"
-      : solScore >= 40 ? "Media — puede requerir optimización"
-      : "Baja — dificultades esperadas en expresión";
+        : solScore >= 40 ? "Media — puede requerir optimización"
+          : "Baja — dificultades esperadas en expresión";
     const stabLabel = instIdx == null ? null : instIdx < 40 ? "Estable (II &lt; 40)" : "Inestable (II ≥ 40)";
 
     const summaryRaw = summary || "El análisis IA no está disponible.";
@@ -178,14 +269,14 @@ export default function Viewer() {
           <div class="bio-card">
             <div class="bio-label">Solubilidad</div>
             <div class="bio-value">${solScore.toFixed(1)}<span class="bio-unit">/100</span></div>
-            <div class="progress-bar"><div class="progress-fill" style="width:${solScore}%;background:${solScore>=70?"#059669":solScore>=40?"#d97706":"#dc2626"}"></div></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${solScore}%;background:${solScore >= 70 ? "#059669" : solScore >= 40 ? "#d97706" : "#dc2626"}"></div></div>
             <div class="bio-desc">${solLabel}</div>
           </div>` : ""}
           ${instIdx != null ? `
           <div class="bio-card">
             <div class="bio-label">Índice de Inestabilidad</div>
-            <div class="bio-value" style="color:${instIdx<40?"#059669":"#dc2626"}">${instIdx.toFixed(1)}</div>
-            <div class="bio-badge" style="background:${instIdx<40?"#d1fae5":"#fee2e2"};color:${instIdx<40?"#065f46":"#991b1b"}">${stabLabel}</div>
+            <div class="bio-value" style="color:${instIdx < 40 ? "#059669" : "#dc2626"}">${instIdx.toFixed(1)}</div>
+            <div class="bio-badge" style="background:${instIdx < 40 ? "#d1fae5" : "#fee2e2"};color:${instIdx < 40 ? "#065f46" : "#991b1b"}">${stabLabel}</div>
           </div>` : ""}
         </div>
       </section>` : "";
@@ -365,49 +456,49 @@ ${bioHtml}
       let data = {};
 
       if (jobId === "job_demo_segura") {
-          // Demo Segura inyectada: No hay latencia ni fallos de red
+        // Demo Segura inyectada: No hay latencia ni fallos de red
+        data = {
+          name: "Ubiquitina (Demo UI Pitch)",
+          plddt: 94.2,
+          pdbFileUrl: null, // Usa el 1cbs embebido
+          biological: {
+            solubility_score: 88.5,
+            solubility_prediction: "SOLUBLE",
+            instability_index: 28.4,
+            stability_status: "STABLE",
+            toxicity_alerts: [],
+            allergenicity_alerts: []
+          },
+          uniprot: "P0CG48",
+          organism: "Homo sapiens",
+          paeMatrix: null,
+          plddtHistogram: [0, 0, 5, 95]
+        };
+      } else {
+        try {
+          // getJobOutputs usa cache compartido — si el usuario ya abrió esta proteína
+          // en el Visor (o RAGAssistant la fetcheó al referenciarla), no hay petición de red.
+          const outputs = await getJobOutputs(jobId);
+          console.log("Viewer: datos fetched para jobId", jobId, outputs);
           data = {
-            name: "Ubiquitina (Demo UI Pitch)",
-            plddt: 94.2,
-            pdbFileUrl: null, // Usa el 1cbs embebido
-            biological: {
-              solubility_score: 88.5,
-              solubility_prediction: "SOLUBLE",
-              instability_index: 28.4,
-              stability_status: "STABLE",
-              toxicity_alerts: [],
-              allergenicity_alerts: []
-            },
-            uniprot: "P0CG48",
-            organism: "Homo sapiens",
-            paeMatrix: null,
-            plddtHistogram: [0, 0, 5, 95]
+            name: outputs.name || jobId,
+            plddt: outputs.plddt ?? 85.0,
+            pdbFileUrl: outputs.pdbFileUrl || null,
+            biological: outputs.biological || null,
+            uniprot: outputs.uniprot || null,
+            organism: outputs.organism || null,
+            paeMatrix: outputs.paeMatrix || null,
+            plddtHistogram: outputs.plddtHistogram || null,
           };
-        } else {
-          try {
-            // getJobOutputs usa cache compartido — si el usuario ya abrió esta proteína
-            // en el Visor (o RAGAssistant la fetcheó al referenciarla), no hay petición de red.
-            const outputs = await getJobOutputs(jobId);
-            console.log("Viewer: datos fetched para jobId", jobId, outputs);
-            data = {
-              name:           outputs.name           || jobId,
-              plddt:          outputs.plddt          ?? 85.0,
-              pdbFileUrl:     outputs.pdbFileUrl     || null,
-              biological:     outputs.biological     || null,
-              uniprot:        outputs.uniprot        || null,
-              organism:       outputs.organism       || null,
-              paeMatrix:      outputs.paeMatrix      || null,
-              plddtHistogram: outputs.plddtHistogram || null,
-            };
-            if (data.pdbFileUrl) {
-              const blob = new Blob([data.pdbFileUrl], { type: "text/plain" });
-              customUrl = URL.createObjectURL(blob);
-            }
-          } catch (e) {
-            console.error("Error fetching job outputs", e);
-            if (!isCancelled) setFetchError(true);
-            return;
+          if (data.pdbFileUrl) {
+            const blob = new Blob([data.pdbFileUrl], { type: "text/plain" });
+            customUrl = URL.createObjectURL(blob);
           }
+        } catch (e) {
+          console.error("Error fetching job outputs", e);
+          if (!isCancelled) setFetchError(true);
+          return;
+        }
       }
 
       if (isCancelled) return;
@@ -434,13 +525,58 @@ ${bioHtml}
             alphafoldView: true,
           };
 
+          const isCif = data.pdbFileUrl && (data.pdbFileUrl.includes("_entry.id") || data.pdbFileUrl.includes("loop_"));
           if (customUrl) {
-            options.customData = { url: customUrl, format: 'pdb' };
+            options.customData = { url: customUrl, format: isCif ? 'cif' : 'pdb' };
           } else {
             options.moleculeId = "1cbs"; // Example default molecule
           }
 
           viewerInstance.render(viewerContainerRef.current, options);
+
+          // Escuchar el evento oficial de finalización de carga para recuperar la jerarquía
+          viewerInstance.events.loadComplete.subscribe((loaded) => {
+            if (loaded && viewerInstance.plugin && viewerInstance.plugin.managers) {
+              const hierarchy = viewerInstance.plugin.managers.structure.hierarchy;
+              if (hierarchy.selection.structures.length > 0) {
+                const componentsList = hierarchy.selection.structures[0].components.reduce((acc, comp) => {
+                  if (!comp.cell.obj || !comp.cell.obj.data || comp.cell.obj.data.elementCount === 0) return acc;
+                  const candidateKey = comp.key || comp.cell.obj?.data?.repr?.type || '';
+                  const rawKey = String(candidateKey).toLowerCase().replace('-group', '');
+                  let resolvedKey = rawKey;
+
+                  if (rawKey.includes('water')) resolvedKey = 'water';
+                  else if (rawKey.includes('polymer')) resolvedKey = 'polymer';
+                  else if (rawKey.includes('het')) resolvedKey = 'het';
+                  else if (rawKey.includes('carbs')) resolvedKey = 'carbs';
+
+                  const niceName = resolvedKey === 'polymer' ? 'Estructura Principal'
+                    : resolvedKey === 'water' ? 'Agua (Solvente)'
+                      : resolvedKey === 'het' ? 'Ligando / HETATM'
+                        : resolvedKey === 'carbs' ? 'Carbohidratos'
+                          : resolvedKey;
+
+                  if (!acc.some(c => c.key === resolvedKey) && resolvedKey) {
+                    acc.push({
+                      id: comp.cell.transform.ref,
+                      key: resolvedKey,
+                      name: niceName,
+                      visible: (comp.cell.state.isHidden && resolvedKey !== 'polymer') ? true : !comp.cell.state.isHidden
+                    });
+                    if (comp.cell.state.isHidden && resolvedKey !== 'polymer') {
+                      setTimeout(() => {
+                        if (viewerInstanceRef.current && viewerInstanceRef.current.visual) {
+                          viewerInstanceRef.current.visual.visibility({ [resolvedKey]: true });
+                        }
+                      }, 300);
+                    }
+                  }
+                  return acc;
+                }, []);
+                setActiveComponents(componentsList);
+              }
+            }
+          });
 
           setIsLoaded(true);
         } catch (err) {
@@ -465,11 +601,11 @@ ${bioHtml}
 
   /* pLDDT helpers — computed before any early return so hooks aren't skipped */
   const plddt = jobData?.plddt ?? 0;
-  const plddtConf  = plddt >= 90 ? "Muy alta" : plddt >= 70 ? "Alta" : plddt >= 50 ? "Baja" : "Muy baja";
+  const plddtConf = plddt >= 90 ? "Muy alta" : plddt >= 70 ? "Alta" : plddt >= 50 ? "Baja" : "Muy baja";
   const plddtColor = plddt >= 90 ? "text-blue-600 dark:text-blue-400" : plddt >= 70 ? "text-sky-500 dark:text-sky-400" : plddt >= 50 ? "text-amber-500" : "text-orange-500";
-  const plddtBg    = plddt >= 90 ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" : plddt >= 70 ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800" : plddt >= 50 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" : "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800";
-  const solScore   = jobData?.biological?.solubility_score;
-  const instIdx    = jobData?.biological?.instability_index;
+  const plddtBg = plddt >= 90 ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" : plddt >= 70 ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800" : plddt >= 50 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" : "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800";
+  const solScore = jobData?.biological?.solubility_score;
+  const instIdx = jobData?.biological?.instability_index;
 
   /* ── Empty state: no job selected ── */
   if (!jobId) {
@@ -590,15 +726,14 @@ ${bioHtml}
 
         {/* Tabs */}
         {!fetchError && <div className="flex border-b border-slate-100 dark:border-slate-800 shrink-0">
-          {[["details", "Estructura"], ["copilot", "Proteia"]].map(([key, label]) => (
+          {[["details", "Estructura"], ["copilot", "Proteia"], ["vista", "Vista"]].map(([key, label]) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex-1 py-2.5 text-xs font-semibold transition-colors border-b-2 ${
-                activeTab === key
-                  ? "border-primary-500 text-primary-600 dark:text-primary-400"
-                  : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-              }`}
+              className={`flex-1 py-2.5 text-xs font-semibold transition-colors border-b-2 ${activeTab === key
+                ? "border-primary-500 text-primary-600 dark:text-primary-400"
+                : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                }`}
             >
               {label}
             </button>
@@ -635,7 +770,7 @@ ${bioHtml}
                   />
                 </div>
                 <div className="flex justify-between mt-1.5">
-                  {[["#FF7D45","< 50"],["#FFDB13","50"],["#65CBF3","70"],["#0053D6","90+"]].map(([c, l]) => (
+                  {[["#FF7D45", "< 50"], ["#FFDB13", "50"], ["#65CBF3", "70"], ["#0053D6", "90+"]].map(([c, l]) => (
                     <div key={l} className="flex items-center gap-0.5">
                       <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c }} />
                       <span className="text-[8px] text-slate-400 dark:text-slate-500 font-mono">{l}</span>
@@ -723,7 +858,7 @@ ${bioHtml}
 
                 <div className="flex gap-1.5">
                   {[
-                    { label: "PDB",  onClick: handleDownloadPdb,  disabled: !jobData?.pdbFileUrl },
+                    { label: "PDB", onClick: handleDownloadPdb, disabled: !jobData?.pdbFileUrl },
                     { label: "JSON", onClick: handleDownloadJson, disabled: !jobData },
                     { label: downloadingLogs ? "…" : "Logs", onClick: handleDownloadLogs, disabled: !jobId || downloadingLogs },
                   ].map(({ label, onClick, disabled }) => (
@@ -807,3 +942,4 @@ ${bioHtml}
     </div>
   );
 }
+
