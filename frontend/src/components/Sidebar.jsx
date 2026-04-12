@@ -42,7 +42,7 @@ export default function Sidebar() {
     { name: "Nuevo Trabajo", path: "/app/submit", icon: <Dna className="w-5 h-5" /> },
     { name: "Mis Trabajos", path: "/app/jobs", icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: "Proyectos", path: "/app/projects", icon: <FolderOpen className="w-5 h-5" />, badge: pendingInvites },
-    { name: "ProteIA", path: "/app/assistant", icon: <BrainCircuit className="w-5 h-5" /> },
+    { name: "MicaFold", path: "/app/assistant", icon: <BrainCircuit className="w-5 h-5" /> },
   ];
 
   const initials = user?.displayName
@@ -62,8 +62,8 @@ export default function Sidebar() {
             className="flex items-center gap-2 font-bold text-base text-primary-600 dark:text-primary-400 whitespace-nowrap tracking-tight hover:text-primary-500 dark:hover:text-primary-300 transition-all duration-200 ease-in-out active:scale-[0.98]"
             title="Ir a la página de inicio"
           >
-            <img src={logoUrl} className="w-6 h-6 object-contain" alt="OmicaFold" />
-            OmicaFold
+            <img src={logoUrl} className="w-6 h-6 object-contain" alt="MicaFold" />
+            MicaFold
           </Link>
         )}
         <button

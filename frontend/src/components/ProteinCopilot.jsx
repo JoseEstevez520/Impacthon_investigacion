@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Send, Bot, User, Sparkles, Copy, Check } from "lucide-react";
-import { proteiaApi } from "../api/proteiaApi";
+import { micafoldApi } from "../api/micafoldApi";
 import ReactMarkdown from "react-markdown";
 
 /* Streams `fullText` into `onChunk(partial)` then calls `onDone`.
@@ -131,7 +131,7 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
     (async () => {
       setIsWaiting(true);
       console.log("ProteinCopilot: generando resumen con enrichedData:", enrichedData);
-      const summary = await proteiaApi.getInitialSummary(jobId, proteinName, enrichedData);
+      const summary = await micafoldApi.getInitialSummary(jobId, proteinName, enrichedData);
       if (cancelled) return;
       setIsWaiting(false);
       if (onSummaryReady) onSummaryReady(summary);
@@ -151,7 +151,7 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
 
     setIsWaiting(true);
     console.log(" ProteinCopilot enviando mensaje con enrichedData:", enrichedData);
-    const aiResponse = await proteiaApi.sendChatMessage(jobId, userMsg, messages, enrichedData || statusData);
+    const aiResponse = await micafoldApi.sendChatMessage(jobId, userMsg, messages, enrichedData || statusData);
     setIsWaiting(false);
     startStream(aiResponse);
   };
@@ -168,7 +168,7 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold dark:text-white">ProteIA</h3>
+            <h3 className="text-sm font-bold dark:text-white">MicaFold</h3>
             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Asistente de análisis estructural</p>
           </div>
         </div>

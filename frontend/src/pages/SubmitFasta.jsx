@@ -544,8 +544,8 @@ export default function SubmitFasta() {
                       type="button"
                       onClick={() => setResourcePreset(preset)}
                       className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150 ease-in-out border outline-none ${isSelected
-                          ? "border-[#2dd4bf] text-[#2dd4bf] bg-[rgba(45,212,191,0.07)]"
-                          : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-transparent"
+                        ? "border-[#2dd4bf] text-[#2dd4bf] bg-[rgba(45,212,191,0.07)]"
+                        : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-transparent"
                         }`}
                     >
                       {label}
@@ -685,9 +685,9 @@ export default function SubmitFasta() {
               {/* Status Indicator */}
               <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-[10px] p-4 flex flex-col items-center justify-center">
                 <div className={`px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-2 ${jobStatus.status === 'PENDING' ? 'bg-amber-500/20 text-amber-500' :
-                    jobStatus.status === 'RUNNING' ? 'bg-blue-500/20 text-blue-400' :
-                      jobStatus.status === 'COMPLETED' ? 'bg-[#2dd4bf]/20 text-[#2dd4bf]' :
-                        jobStatus.status === 'FAILED' ? 'bg-red-500/20 text-red-500' : 'bg-slate-800 text-slate-400'
+                  jobStatus.status === 'RUNNING' ? 'bg-blue-500/20 text-blue-400' :
+                    jobStatus.status === 'COMPLETED' ? 'bg-[#2dd4bf]/20 text-[#2dd4bf]' :
+                      jobStatus.status === 'FAILED' ? 'bg-red-500/20 text-red-500' : 'bg-slate-800 text-slate-400'
                   }`}>
                   {jobStatus.status === 'RUNNING' && <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />}
                   {jobStatus.status}
@@ -737,9 +737,9 @@ export default function SubmitFasta() {
                               <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 px-3 py-2 border border-slate-200 dark:border-slate-700/50 rounded-[6px]">
                                 <span className="text-xs text-slate-800 dark:text-slate-200">pLDDT medio</span>
                                 <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${plddt > 90 ? 'bg-[#2dd4bf]/20 text-[#2dd4bf]' :
-                                    plddt >= 70 ? 'bg-blue-500/20 text-blue-400' :
-                                      plddt >= 50 ? 'bg-amber-500/20 text-amber-500' :
-                                        'bg-red-500/20 text-red-500'
+                                  plddt >= 70 ? 'bg-blue-500/20 text-blue-400' :
+                                    plddt >= 50 ? 'bg-amber-500/20 text-amber-500' :
+                                      'bg-red-500/20 text-red-500'
                                   }`}>
                                   {plddt.toFixed(1)}
                                 </span>

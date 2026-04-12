@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Download, X, Maximize2, FileText, Loader2, Dna, ArrowRight, FlaskConical, AlertTriangle, RefreshCw } from "lucide-react";
-import { proteiaApi } from "../api/proteiaApi";
+import { micafoldApi } from "../api/micafoldApi";
 import { getJobOutputs } from "../lib/outputsCache";
 import "pdbe-molstar/build/pdbe-molstar-light.css";
 import PAEHeatmap from "../components/PAEHeatmap";
@@ -152,7 +152,7 @@ export default function Viewer() {
   // Pre-carga del resumen IA en cuanto llegan los datos del job (no esperar al clic)
   useEffect(() => {
     if (!jobId || !jobData || aiSummary) return;
-    proteiaApi.getInitialSummary(jobId, jobData.name, jobData)
+    micafoldApi.getInitialSummary(jobId, jobData.name, jobData)
       .then(setAiSummary)
       .catch(() => { /* Silenciado intencionadamente si la IA no está respondiendo */ });
   }, [jobId, jobData, aiSummary]);
@@ -163,7 +163,7 @@ export default function Viewer() {
     if (!summary) {
       setWaitingForAi(true);
       try {
-        summary = await proteiaApi.getInitialSummary(jobId, jobData.name, jobData);
+        summary = await micafoldApi.getInitialSummary(jobId, jobData.name, jobData);
         setAiSummary(summary);
       } finally {
         setWaitingForAi(false);
@@ -296,7 +296,7 @@ export default function Viewer() {
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>OmicaFold — ${jobData?.name || "Informe"}</title>
+<title>MicaFold — ${jobData?.name || "Informe"}</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   @page { size: A4; margin: 0; }
@@ -378,7 +378,7 @@ export default function Viewer() {
 </div>
 
 <div class="header">
-  <div class="header-brand"> OmicaFold<span>Informe de Predicción Estructural</span></div>
+  <div class="header-brand"> MicaFold<span>Informe de Predicción Estructural</span></div>
   <div class="header-date">Impacthon 2026 · CESGA FinisTerrae III<br>${new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })}</div>
 </div>
 
@@ -405,12 +405,12 @@ ${imagesHtml}
 ${bioHtml}
 
 <section>
-  <h2>Análisis IA — ProteIA (Gemini 1.5 Pro via n8n)</h2>
+  <h2>Análisis IA — MicaFold (Gemini 1.5 Pro via n8n)</h2>
   <div class="ai-summary"><p>${summaryHtml}</p></div>
 </section>
 
 <div class="footer">
-  <div class="footer-brand"> OmicaFold</div>
+  <div class="footer-brand"> MicaFold</div>
   <div class="footer-note">Los resultados son predicciones computacionales generadas por nuestro sistema 2. No constituyen diagnóstico clínico ni asesoramiento médico.</div>
 </div>
 
@@ -756,7 +756,7 @@ ${bioHtml}
 
         {/* Tabs */}
         {!fetchError && <div className="flex border-b border-slate-100 dark:border-slate-800 shrink-0">
-          {[["details", "Estructura"], ["vista", "Vista"], ["copilot", "ProteIA"]].map(([key, label]) => (
+          {[["details", "Estructura"], ["vista", "Vista"], ["copilot", "MicaFold"]].map(([key, label]) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
