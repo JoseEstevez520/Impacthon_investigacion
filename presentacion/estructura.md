@@ -1,139 +1,123 @@
-# Presentación LocalFold — Impacthon 2026
+# OmicaFold — Guión Impacthon 2026
 
-> **Slogan:** Despliega el futuro.
-> **Tiempo:** 5 minutos
-> **Contexto:** 12 grupos, mismo reto. Diferenciarse por formato y narrativa.
-> **Formato propuesto:** Vídeo de fondo continuo (sin audio) + presentadores en vivo
+> **P1** = storyteller/narrador | **P2** = demo driver | **5 minutos** | Solux
 
 ---
 
-## Estructura narrativa (5 min)
+### [ANTES DE EMPEZAR]
+*[P1 deja un sobre en la mesa del jurado mientras entran. Con una sonrisa:]*
 
-### 0:00 – 0:30 · El problema
-- Arrancar el vídeo de fondo: imágenes de laboratorio, microscopio, terminal negra
-- Una sola frase hablada: *"Así predice proteínas un investigador en España hoy."*
-- No explicar nada más. Dejar que la imagen hable.
-
-### 0:30 – 2:30 · La demo en vivo
-- Abrir LocalFold directamente (sin slides)
-- Flujo: Submit secuencia → job en tracking → viewer 3D cargando → abrir ProteIA
-- El que habla narra; el otro maneja la pantalla
-- **Truco:** lanzar el job al inicio de la presentación para que complete en tiempo real durante la demo
-
-### 2:30 – 3:30 · ProteIA — el diferenciador
-- Hacer la pregunta clave en el chat en vivo
-- Dejar que la respuesta se lea sola, no interrumpirla
-- Subrayar: *"Ningún otro grupo tiene esto integrado."*
-
-### 3:30 – 4:15 · Credencial técnica
-- *"Corre en FinisTerrae III, el supercomputador del CESGA. API real, jobs reales."*
-- Stack visible: AlphaFold 2 · CESGA · Firebase · pdbe-molstar · Gemini
-- Máximo 30 segundos. No entrar en detalles de código.
-
-### 4:15 – 5:00 · Cierre
-- Número concreto de impacto (grupos de investigación en España usando CESGA)
-- Frase final + slogan en pantalla: **"Despliega el futuro."**
-- Silencio. No cerrar con "gracias" genérico.
+> *"Esto es un soborno. Abridlo cuando os lo diga."*
 
 ---
 
-## Vídeo de fondo
+### [0:00 – 0:50] APERTURA
+*[P1. Pausa de 2 segundos antes de hablar. Sin mirar slides. Voz tranquila, casi íntima.]*
 
-Estructura del vídeo continuo (~5 min, sin audio o música muy sutil):
-
-| Segmento | Contenido visual | Duración |
-|---|---|---|
-| Problema | Laboratorio, microscopio, terminal negra | 0:00 – 0:30 |
-| Demo | Grabación de LocalFold en bucle suave | 0:30 – 2:30 |
-| ProteIA | Render proteína 3D rotando lentamente | 2:30 – 3:30 |
-| Stack/Técnico | Logotipos tech, CESGA, servidores | 3:30 – 4:15 |
-| Cierre | Logo LocalFold + slogan | 4:15 – 5:00 |
-
-**Fuentes de material:**
-- Pexels / Pixabay: vídeos HD de laboratorio y biología (gratis)
-- Grabación propia del visor 3D de LocalFold rotando
-- Narración IA si se necesita: ElevenLabs
-
-**Herramientas de edición:**
-- CapCut (rápido) o DaVinci Resolve (más control)
+> *"En 2020 se abrió un sobre que llevaba décadas esperando.*
+> *Cincuenta años de ciencia, miles de investigadores, millones de horas.*
+> *Y en ese momento, una IA lo había resuelto todo.*
+>
+> *Hoy tres millones de investigadores en ciento noventa países usan lo que salió de ese sobre.*
+> *Porque detrás de cada proteína hay una enfermedad,*
+> *y detrás de cada enfermedad hay una persona que espera una respuesta.*
+>
+> *Nosotros nos preguntamos cuántas de esas respuestas siguen atrapadas*
+> *porque el cómputo que las libera no llega a quien las busca.*
+>
+> *Una IA abrió esa puerta. Pero hay mil puertas más.*
+> *Y casi nadie tiene llave."*
 
 ---
 
-## Ideas pendientes de decidir
+### [0:50 – 1:15] LA BRECHA
+*[Tono cambia. Más cercano, casi conversacional.]*
 
-- [ ] ¿Inglés o español en la presentación?
-- [ ] ¿Quién habla y quién maneja la pantalla?
-- [ ] Secuencia proteica elegida para la demo (TDP-43/ELA tiene impacto narrativo)
-- [ ] Pregunta exacta que se lanza a ProteIA en vivo
-- [ ] Frase de cierre exacta (distinta de "gracias")
-- [ ] Música de fondo sí/no y qué tono
+> *"Imaginad que sois biólogos. Tenéis la secuencia, tenéis la hipótesis, tenéis años de trabajo detrás. Y existe la máquina que puede dároslo todo — está aquí, en Galicia, en el CESGA.*
+>
+> *Tenéis que dominar Linux, SSH, SLURM, módulos de entorno, scripts en Bash, APIs REST, la arquitectura de FinisTerrae III..."*
 
----
+*(pausa — mira al jurado)*
 
-## Principios de diseño de la presentación
+> *"El biólogo que podría curar una enfermedad rara... se queda en el formulario de acceso.*
+>
+> *Ese sobre que os dejamos — abridlo."*
 
-- **Ritmo alto:** algo cambia en pantalla cada 30-40 segundos
-- **Nunca leer slides:** los presentadores son el foco, el vídeo acompaña
-- **Demo > descripción:** mostrar siempre es mejor que explicar
-- **Emoción antes que técnica:** el problema humano (ELA, Alzheimer) antes que la arquitectura
-- **Cerrar con número real**, no con promesa abstracta
+*[4 segundos de silencio — jurado abre, escanea QR → pantalla roja en sus móviles]*
+*[P1 no dice nada. Deja que lo lean.]*
 
----
+> *"Eso es lo que ve hoy un investigador. Una puerta cerrada.*
+>
+> *Eso no es un problema técnico. Es un problema de diseño.*
+> *Y los problemas de diseño tienen soluciones de diseño."*
 
-## Ideas propias del equipo (en construcción)
+*(giro hacia la pantalla — P2 da un paso al frente)*
 
-### Hilo narrativo central
-La conexión emocional es lo más importante. No vendemos una herramienta — contamos una historia. El storytelling es el núcleo de la presentación, no un adorno.
-
-### Esto no es un reto. Es una misión.
-Un reto se gana el sábado. Una misión trasciende el hackathon.
-
-LocalFold no nació para ganar una competición — nació porque existe un problema real que frena el progreso científico y hay personas que sufren mientras ese progreso tarda. Eso es una misión.
-
-La presentación debe transmitir esa diferencia desde el primer segundo. No estamos aquí para impresionar a un jurado. Estamos aquí porque creemos que esto importa de verdad.
-
-**Cómo se nota en la presentación:**
-- El tono no es el de un pitch de startup — es el de alguien que ha encontrado algo en lo que cree
-- No cerrar con "esperamos seguir desarrollando esto" — cerrar con *por qué esto tiene que existir*
-- La demo no es una demostración de features — es la prueba de que la misión es posible
-
-### Referencia: Demis Hassabis y el documental de Google
-Uno de los miembros del equipo vio un documental de Google sobre Demis Hassabis que fue una fuente de inspiración directa para este proyecto. Hassabis habla de la IA no como un fin en sí mismo, sino como el instrumento más poderoso que ha tenido la humanidad para entender el universo — y en particular, para resolver problemas biológicos que llevan décadas sin solución.
-
-AlphaFold para él no era "predecir proteínas". Era atacar el problema del plegamiento proteico que llevaba 50 años bloqueando el progreso científico, porque detrás de esa solución había millones de vidas.
-
-**Por qué mencionarlo explícitamente en la presentación:**
-- El reto está patrocinado por Google — Hassabis es cofundador de DeepMind, ahora parte de Google
-- AlphaFold es el motor que hay debajo de LocalFold — no es un nombre cualquiera, es el origen
-- Mencionarlo conecta directamente con los valores del jurado sin ser adulador
-- Da credibilidad intelectual al proyecto: venimos de una inspiración real, no de una idea de hackathon
-
-**Cómo usarlo:**
-- Abrir con una cita o idea de Hassabis como gancho narrativo
-- Conectar: lo que Hassabis hizo a escala global, LocalFold lo hace accesible a escala local — de ahí el nombre
-- La idea fuerza: *la IA no reemplaza al investigador, le da superpoderes*
-
-**Frase posible para la intro:**
-> *"Demis Hassabis dijo que AlphaFold era solo el principio. Nosotros construimos lo que sigue."*
-
-**Frase posible para el cierre:**
-> *"AlphaFold cambió la biología. LocalFold la pone en tus manos."*
+> *"Les presentamos OmicaFold."*
 
 ---
 
-### El CESGA como símbolo de Galicia
-El CESGA no es solo infraestructura técnica — es una declaración de que Galicia tiene capacidad de hacer ciencia de primer nivel. LocalFold es una forma de visibilizar ese talento y ponerlo al servicio de investigadores reales.
+### [1:15 – 1:45] REVEAL
 
-Ángulo narrativo posible: *"Hecho en Galicia, para la ciencia global."* — conecta con el jurado local (GDG Santiago, USC) sin ser provinciano, porque la ambición es universal.
-
-Esto también refuerza el nombre: **Local**Fold — local no como limitación, sino como origen con orgullo.
+> *"OmicaFold no es una interfaz para AlphaFold. Es la puerta de entrada a toda la computación científica del CESGA — para cualquier investigador, sin importar su perfil técnico.*
+>
+> *Y dentro del visor, un asistente construido con Gemini que no responde en genérico — responde sobre la proteína que tienes delante, ahora mismo.*
+>
+> *Eso cambia lo que significa entender un resultado."*
 
 ---
 
-## Pendiente de desarrollar
+### [1:45 – 3:45] DEMO EN VIVO *(P2 conduce, P1 narra)*
 
-- [ ] Más ideas del equipo sobre el hilo narrativo
-- [ ] ¿Mencionamos explícitamente a Hassabis/AlphaFold en la intro?
-- [ ] ¿Abrimos con una pregunta al jurado?
-- [ ] ¿Hay una historia personal detrás de por qué este proyecto?
-- [ ] ¿Cómo integramos el orgullo local (CESGA/Galicia) sin que suene a recurso fácil?
+**UX — criterio 1:**
+> *"Entro, selecciono AlphaFold2, pego mi secuencia, envío. Nada de terminales. Nada de scripts."*
+
+**Ciclo de vida — criterio 3:**
+> *"Estado en tiempo real: cola, ejecutándose, completado. Firebase sincroniza sin recargar."*
+
+**Visualización + pLDDT + PAE — criterio 2:**
+*(proteína rotando en pantalla — pausa deliberada)*
+
+> *"pLDDT: confianza residuo a residuo. Azul — alta confianza. Naranja — donde AlphaFold duda. Esa duda es información.*
+>
+> *PAE heatmap: error entre pares de residuos. Esta zona fuera de la diagonal... aquí hay una interacción que merece atención."*
+
+**ProteIA / Gemini — criterio 4:**
+*(abre ProteIA junto al visor)*
+
+> *"ProteIA está aquí, dentro del visor, con contexto completo de lo que estoy viendo.*
+> *Le pregunto: '¿Qué significan las regiones de baja confianza en esta estructura?'"*
+
+*(espera la respuesta — silencio)*
+
+> *"Gemini no responde en genérico. Responde sobre esta proteína, este resultado, ahora.*
+> *ProteIA no reemplaza al investigador. Le devuelve tiempo para investigar."*
+
+---
+
+### [3:45 – 4:00] CREDENCIAL TÉCNICA *(P2, 15 segundos)*
+
+> *"React, Firebase, pdbe-molstar, Gemini. API oficial del reto — la misma infraestructura CESGA que usaría en producción. Desplegable hoy."*
+
+---
+
+### [4:00 – 5:00] CIERRE *(P1)*
+*[Sin mirar slides. De pie. Contacto visual directo.]*
+
+> *"Muchas puertas llevan décadas cerradas. La ciencia está. La infraestructura está.*
+>
+> *Solo faltaba quien fabricara la llave."*
+
+*(pausa — un paso hacia el jurado)*
+
+> *"Abrid otra vez el móvil."*
+
+*[Pantalla verde: ACCESO CONCEDIDO — 5 segundos de silencio]*
+
+> ***"Solux. OmicaFold. Despliega el futuro."***
+
+*(Silencio. No decir gracias.)*
+
+---
+
+> **Sobre:** tarjeta con QR dentro. Pantalla roja al escanear → verde al cierre por timer local (90s). Reverso con screenshot impreso como fallback. Si falla WiFi: *"Si el WiFi funcionara como nuestro servidor..."*
