@@ -40,12 +40,12 @@ function CopyButton({ text }) {
 }
 
 export default function ProteinCopilot({ jobId, proteinName, statusData, onSummaryReady }) {
-  const [messages,   setMessages]   = useState([]);
-  const [input,      setInput]      = useState("");
-  const [isWaiting,  setIsWaiting]  = useState(false);  // waiting for API
-  const [isStreaming,setIsStreaming] = useState(false);  // animating text
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [isWaiting, setIsWaiting] = useState(false);  // waiting for API
+  const [isStreaming, setIsStreaming] = useState(false);  // animating text
   const [enrichedData, setEnrichedData] = useState(statusData); // datos completos
-  const scrollRef  = useRef(null);
+  const scrollRef = useRef(null);
   const cancelStream = useRef(null);
 
   // Cargar datos completos cuando se monta o cambia jobId
@@ -59,7 +59,7 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
         const response = await fetch(`https://api-mock-cesga.onrender.com/jobs/${jobId}/outputs`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const cesga = await response.json();
-        
+
         if (!cancelled) {
           const full = {
             name: cesga.protein_metadata?.protein_name || statusData?.name,
@@ -168,7 +168,7 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold dark:text-white">MicaFold</h3>
+            <h3 className="text-sm font-bold dark:text-white">ProteIA</h3>
             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Asistente de análisis estructural</p>
           </div>
         </div>
@@ -186,20 +186,18 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div className={`flex gap-3 max-w-[85%] ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-              <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center border ${
-                msg.role === "ai"
+              <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center border ${msg.role === "ai"
                   ? "bg-primary-50 border-primary-100 text-primary-600 dark:bg-primary-900/30 dark:border-primary-800"
                   : "bg-slate-100 border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700"
-              }`}>
+                }`}>
                 {msg.role === "ai" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
               </div>
 
               <div className="group/msg flex flex-col gap-1">
-                <div className={`p-3 rounded-2xl text-sm leading-relaxed ${
-                  msg.role === "ai"
+                <div className={`p-3 rounded-2xl text-sm leading-relaxed ${msg.role === "ai"
                     ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 shadow-sm"
                     : "bg-primary-600 text-white shadow-md shadow-primary-500/10"
-                }`}>
+                  }`}>
                   {msg.isSummary && (
                     <span className="inline-block px-2 py-0.5 rounded bg-primary-50 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 text-[10px] font-bold uppercase mb-2">
                       Resumen Automático

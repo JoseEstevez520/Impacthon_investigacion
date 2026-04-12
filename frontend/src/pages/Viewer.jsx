@@ -25,7 +25,7 @@ export default function Viewer() {
   useEffect(() => {
     try {
       window.addEventListener('storage', () => { /* listen for future changes if any */ });
-      const raw = localStorage.getItem("omicafold_profile");
+      const raw = localStorage.getItem("micafold_profile");
       if (raw) {
         const { type } = JSON.parse(raw);
         if (type) setProfileType(type);
@@ -417,7 +417,7 @@ ${imagesHtml}
 ${bioHtml}
 
 <section>
-  <h2>Análisis IA — MicaFold (Gemini 1.5 Pro via n8n)</h2>
+  <h2>Análisis IA — ProteIA (Gemini 1.5 Pro via n8n)</h2>
   <div class="ai-summary"><p>${summaryHtml}</p></div>
 </section>
 
@@ -768,7 +768,7 @@ ${bioHtml}
 
         {/* Tabs */}
         {!fetchError && <div className="flex border-b border-slate-100 dark:border-slate-800 shrink-0">
-          {[["details", "Estructura"], ["vista", "Vista"], ["copilot", "MicaFold"]].map(([key, label]) => (
+          {[["details", "Estructura"], ["vista", "Vista"], ["copilot", "ProteIA"]].map(([key, label]) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
@@ -804,9 +804,9 @@ ${bioHtml}
                   )}
                 </div>
                 {profileType === 'student' && jobData?.paeMatrix && (
-                   <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">
-                     Zonas oscuras indican regiones que mantienen una posición fija entre sí (dominios bien formados).
-                   </p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">
+                    Zonas oscuras indican regiones que mantienen una posición fija entre sí (dominios bien formados).
+                  </p>
                 )}
                 {jobData?.paeMatrix ? (
                   <div

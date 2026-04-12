@@ -645,7 +645,7 @@ export default function RAGAssistant() {
           <BrainCircuit className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-bold text-slate-900 dark:text-white">MicaFold</h1>
+          <h1 className="text-sm font-bold text-slate-900 dark:text-white">ProteIA</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
             Especializado en biología estructural · usa{" "}
             <strong className="font-semibold">@</strong> o{" "}

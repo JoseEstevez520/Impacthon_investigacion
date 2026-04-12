@@ -42,7 +42,7 @@ export default function Sidebar() {
     { name: "Nuevo Trabajo", path: "/app/submit", icon: <Dna className="w-5 h-5" />, id: "btn-new-job" },
     { name: "Mis Trabajos", path: "/app/jobs", icon: <LayoutDashboard className="w-5 h-5" />, id: "jobs-link" },
     { name: "Proyectos", path: "/app/projects", icon: <FolderOpen className="w-5 h-5" />, badge: pendingInvites, id: "projects-list" },
-    { name: "MicaFold", path: "/app/assistant", icon: <BrainCircuit className="w-5 h-5" />, id: "assistant-link" },
+    { name: "ProteIA", path: "/app/assistant", icon: <BrainCircuit className="w-5 h-5" />, id: "assistant-link" },
     { name: "Labs", path: "/app/labs", icon: <Beaker className="w-5 h-5" />, id: "labs-link" },
   ];
 
@@ -52,7 +52,7 @@ export default function Sidebar() {
 
   // Lanzar el tour adecuado según la página actual
   const handleStartTutorial = () => {
-    if (location.pathname.includes("/submit"))    return startTour(SUBMIT_STEPS);
+    if (location.pathname.includes("/submit")) return startTour(SUBMIT_STEPS);
     if (location.pathname.includes("/assistant")) return startTour(CHAT_STEPS);
     if (location.pathname.includes("/app?job=") || location.search.includes("job=")) return startTour(VIEWER_STEPS);
     startTour(DASHBOARD_STEPS);
@@ -171,11 +171,10 @@ export default function Sidebar() {
             <Link
               to="/app/settings"
               title="Ajustes"
-              className={`p-1 rounded shrink-0 transition-all duration-200 ease-in-out active:scale-[0.98] ${
-                location.pathname === "/app/settings"
+              className={`p-1 rounded shrink-0 transition-all duration-200 ease-in-out active:scale-[0.98] ${location.pathname === "/app/settings"
                   ? "text-primary-500 dark:text-primary-400"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-              }`}
+                }`}
             >
               <Settings className="w-3.5 h-3.5" />
             </Link>
@@ -189,11 +188,10 @@ export default function Sidebar() {
           <Link
             to="/app/settings"
             title="Ajustes"
-            className={`w-full flex items-center justify-center py-1.5 rounded-md transition-all duration-200 ease-in-out active:scale-[0.98] ${
-              location.pathname === "/app/settings"
+            className={`w-full flex items-center justify-center py-1.5 rounded-md transition-all duration-200 ease-in-out active:scale-[0.98] ${location.pathname === "/app/settings"
                 ? "text-primary-500 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-            }`}
+              }`}
           >
             <Settings className="w-[18px] h-[18px]" />
           </Link>
