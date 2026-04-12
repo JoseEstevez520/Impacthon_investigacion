@@ -31,18 +31,18 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col font-sans selection:bg-primary-500/30">
+    <div className="min-h-screen bg-slate-50 dark:bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 flex flex-col font-sans selection:bg-primary-500/30">
 
       {/* Navbar */}
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-slate-950/80 backdrop-blur-md border-b border-white/5" : "bg-transparent"}`}>
+      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-slate-50 dark:bg-white dark:bg-slate-800/80 backdrop-blur-md border-b border-white/5" : "bg-transparent"}`}>
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={logoUrl} className="w-8 h-8 object-contain" alt="LocalFold" />
-            <span className="text-xl font-bold tracking-tight text-white">Local<span className="text-primary-500">Fold</span></span>
+            <img src={logoUrl} className="w-8 h-8 object-contain" alt="MicaFold" />
+            <span className="text-xl font-bold tracking-tight text-white">Omica<span className="text-primary-500">Fold</span></span>
           </div>
           <button
             onClick={handleLogin}
-            className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+            className="text-sm font-medium text-slate-300 hover:text-white transition-all duration-200 ease-in-out active:scale-[0.98]"
           >
             Iniciar sesión →
           </button>
@@ -71,7 +71,7 @@ export default function Landing() {
           </div>
 
           <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 leading-tight">
-            AlphaFold en tu navegador,<br />sin abrir la terminal.
+            nuestro sistema en tu navegador,<br />sin abrir la terminal.
           </h1>
 
           <p className="text-lg lg:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
@@ -81,7 +81,7 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <button
               onClick={handleLogin}
-              className="flex items-center gap-2 px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold text-lg shadow-[0_0_40px_-10px_rgba(99,102,241,0.6)] transition-all hover:scale-105 active:scale-95"
+              className="flex items-center gap-2 px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold text-lg shadow-[0_0_40px_-10px_rgba(99,102,241,0.6)] hover:scale-105 transition-all duration-200 ease-in-out active:scale-[0.98]"
             >
               Empezar con Google
               <ArrowRight className="w-5 h-5" />
@@ -97,7 +97,7 @@ export default function Landing() {
           <div className="flex flex-wrap justify-center items-center gap-3">
             {[
               { label: "CESGA FinisTerrae III", color: "border-blue-500/30 text-blue-300" },
-              { label: "AlphaFold 2", color: "border-emerald-500/30 text-emerald-300" },
+              { label: "nuestro sistema 2", color: "border-emerald-500/30 text-emerald-300" },
               { label: "Google Gemini", color: "border-primary-500/30 text-primary-300" },
               { label: "n8n", color: "border-orange-500/30 text-orange-300" },
               { label: "Firebase", color: "border-amber-500/30 text-amber-300" },
@@ -121,10 +121,10 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { step: "01", icon: <Upload className="w-5 h-5" />, color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", title: "Sube tu FASTA", desc: "Pega la secuencia o arrastra el fichero. El nombre se detecta automáticamente del header UniProt." },
-              { step: "02", icon: <Cpu className="w-5 h-5" />, color: "text-primary-400", bg: "bg-primary-500/10 border-primary-500/20", title: "El CESGA computa", desc: "LocalFold reserva nodos GPU A100 y ejecuta AlphaFold 2 en el FinisTerrae III de forma transparente." },
-              { step: "03", icon: <Eye className="w-5 h-5" />, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", title: "Analiza y colabora", desc: "Visor 3D con pLDDT, heatmap PAE, análisis IA con ProteIA y workspace colaborativo en tiempo real." },
+              { step: "02", icon: <Cpu className="w-5 h-5" />, color: "text-primary-400", bg: "bg-primary-500/10 border-primary-500/20", title: "El CESGA computa", desc: "MicaFold reserva nodos GPU A100 y ejecuta nuestro sistema 2 en el FinisTerrae III de forma transparente." },
+              { step: "03", icon: <Eye className="w-5 h-5" />, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", title: "Analiza y colabora", desc: "Visor 3D con pLDDT, heatmap PAE, análisis IA con MicaFold y workspace colaborativo en tiempo real." },
             ].map((item) => (
-              <div key={item.step} className="relative flex flex-col gap-5 p-8 rounded-2xl bg-slate-900/40 border border-white/5 hover:border-white/10 transition-colors">
+              <div key={item.step} className="relative flex flex-col gap-5 p-8 rounded-2xl bg-white dark:bg-slate-800/40 border border-white/5 hover:border-white/10 transition-colors">
                 <span className="absolute top-6 right-6 text-7xl font-black text-white/[0.04] leading-none select-none">{item.step}</span>
                 <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${item.bg} ${item.color}`}>
                   {item.icon}
@@ -147,17 +147,17 @@ export default function Landing() {
             <h2 className="text-4xl lg:text-5xl font-extrabold text-white">Todo en una sola herramienta</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <FeatureCard icon={<Bot className="w-6 h-6 text-emerald-400" />} title="ProteIA — Copiloto IA" desc="Lee pLDDT, solubilidad e inestabilidad y traduce los datos técnicos a conclusiones biológicas accionables." accent="from-emerald-500" />
-            <FeatureCard icon={<BrainCircuit className="w-6 h-6 text-primary-400" />} title="ProteIA — Asistente RAG" desc="Escribe @ para adjuntar el contexto de cualquier predicción. Análisis personalizados, no respuestas genéricas." accent="from-primary-500" />
+            <FeatureCard icon={<Bot className="w-6 h-6 text-emerald-400" />} title="MicaFold — Copiloto IA" desc="Lee pLDDT, solubilidad e inestabilidad y traduce los datos técnicos a conclusiones biológicas accionables." accent="from-emerald-500" />
+            <FeatureCard icon={<BrainCircuit className="w-6 h-6 text-primary-400" />} title="MicaFold — Asistente RAG" desc="Escribe @ para adjuntar el contexto de cualquier predicción. Análisis personalizados, no respuestas genéricas." accent="from-primary-500" />
             <FeatureCard icon={<Users className="w-6 h-6 text-blue-400" />} title="Proyectos colaborativos" desc="Invita colaboradores por email y centraliza todas las predicciones del grupo en un workspace compartido." accent="from-blue-500" />
             <FeatureCard icon={<BarChart3 className="w-6 h-6 text-amber-400" />} title="Visor 3D + PAE heatmap" desc="Estructura molecular interactiva con coloreado por confianza y matriz de error de alineación predicho." accent="from-amber-500" />
             <FeatureCard icon={<Bell className="w-6 h-6 text-rose-400" />} title="Notificaciones en tiempo real" desc="Recibe alertas cuando una predicción completa o falla, aunque tengas la pestaña en segundo plano." accent="from-rose-500" />
-            <FeatureCard icon={<FlaskConical className="w-6 h-6 text-violet-400" />} title="Informe PDF automático" desc="Genera en un clic un informe con estructura 3D, métricas de confianza y análisis de ProteIA." accent="from-violet-500" />
+            <FeatureCard icon={<FlaskConical className="w-6 h-6 text-violet-400" />} title="Informe PDF automático" desc="Genera en un clic un informe con estructura 3D, métricas de confianza y análisis de MicaFold." accent="from-violet-500" />
           </div>
         </div>
       </section>
 
-      {/* ── PROTEIA HIGHLIGHT ── */}
+      {/* ── MICAFOLD HIGHLIGHT ── */}
       <section className="py-24 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <div className="relative rounded-3xl overflow-hidden border border-primary-800/30 bg-gradient-to-br from-slate-900 via-primary-950/20 to-slate-900 p-10 md:p-14">
@@ -170,14 +170,14 @@ export default function Landing() {
                   Un asistente que conoce<br /><span className="text-primary-300">tus</span> proteínas
                 </h2>
                 <p className="text-slate-400 leading-relaxed max-w-md">
-                  Menciona <code className="text-primary-300 bg-primary-900/40 px-1.5 py-0.5 rounded text-sm">@proyecto</code> o <code className="text-primary-300 bg-primary-900/40 px-1.5 py-0.5 rounded text-sm">@proteína</code> para que ProteIA analice tus datos reales — no literatura genérica. Desde comparar riesgos entre candidatos hasta identificar dianas terapéuticas.
+                  Menciona <code className="text-primary-300 bg-primary-900/40 px-1.5 py-0.5 rounded text-sm">@proyecto</code> o <code className="text-primary-300 bg-primary-900/40 px-1.5 py-0.5 rounded text-sm">@proteína</code> para que MicaFold analice tus datos reales — no literatura genérica. Desde comparar riesgos entre candidatos hasta identificar dianas terapéuticas.
                 </p>
               </div>
               {/* Right: fake chat */}
-              <div className="w-full lg:w-[440px] shrink-0 rounded-2xl bg-slate-950/80 border border-white/10 overflow-hidden">
+              <div className="w-full lg:w-[440px] shrink-0 rounded-2xl bg-slate-50 dark:bg-white dark:bg-slate-800/80 border border-white/10 overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-white/5">
                   <BrainCircuit className="w-4 h-4 text-primary-400" />
-                  <span className="text-xs font-semibold text-slate-300">ProteIA</span>
+                  <span className="text-xs font-semibold text-slate-300">MicaFold</span>
                   <span className="ml-auto flex items-center gap-1 text-[10px] text-emerald-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />en línea
                   </span>
@@ -189,7 +189,7 @@ export default function Landing() {
                       <span className="text-primary-200 font-mono font-semibold">@Proyecto_ELA</span> de las 5 proteínas predichas, ¿cuál representa mayor riesgo de agregación patológica?
                     </div>
                   </div>
-                  {/* ProteIA response */}
+                  {/* MicaFold response */}
                   <div className="flex justify-start gap-2.5">
                     <div className="w-6 h-6 rounded-full bg-primary-900 border border-primary-700 flex items-center justify-center shrink-0 mt-0.5">
                       <BrainCircuit className="w-3 h-3 text-primary-400" />
@@ -218,11 +218,11 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 flex flex-col sm:flex-row items-center justify-between gap-8">
           <div>
             <h2 className="text-2xl lg:text-3xl font-extrabold text-white mb-1">¿Listo para predecir tu primera proteína?</h2>
-            <p className="text-slate-500 text-sm">Sin instalaciones · Sin terminal · CESGA FinisTerrae III</p>
+            <p className="text-slate-900 dark:text-slate-500 text-sm">Sin instalaciones · Sin terminal · CESGA FinisTerrae III</p>
           </div>
           <button
             onClick={handleLogin}
-            className="shrink-0 flex items-center gap-2 px-8 py-3.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold text-sm shadow-[0_0_30px_-8px_rgba(99,102,241,0.5)] transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+            className="shrink-0 flex items-center gap-2 px-8 py-3.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold text-sm shadow-[0_0_30px_-8px_rgba(99,102,241,0.5)] hover:scale-105 whitespace-nowrap transition-all duration-200 ease-in-out active:scale-[0.98]"
           >
             Empezar con Google
             <ArrowRight className="w-4 h-4" />
@@ -234,10 +234,10 @@ export default function Landing() {
       <footer className="border-t border-white/5 py-10 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <img src={logoUrl} className="w-6 h-6 object-contain" alt="LocalFold" />
-            <span className="font-bold text-white text-sm">Local<span className="text-primary-500">Fold</span></span>
+            <img src={logoUrl} className="w-6 h-6 object-contain" alt="MicaFold" />
+            <span className="font-bold text-white text-sm">Omica<span className="text-primary-500">Fold</span></span>
             <span className="text-slate-700 text-sm">—</span>
-            <span className="text-slate-500 text-xs">Predicción proteica en el navegador</span>
+            <span className="text-slate-900 dark:text-slate-500 text-xs">Predicción proteica en el navegador</span>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 text-xs text-slate-600">
             <span>Impacthon 2026</span>
@@ -306,7 +306,7 @@ function MetricsSection() {
               >
                 {m.prefix}<MetricCard value={m.value} suffix={m.suffix} from={m.from} to={m.to} />
               </span>
-              <p className="text-sm text-slate-500 leading-snug max-w-[130px]">{m.label}</p>
+              <p className="text-sm text-slate-900 dark:text-slate-500 leading-snug max-w-[130px]">{m.label}</p>
             </div>
           ))}
         </div>
@@ -317,7 +317,7 @@ function MetricsSection() {
 
 function FeatureCard({ icon, title, desc, accent = "from-primary-500" }) {
   return (
-    <div className="group relative bg-slate-900/60 border border-slate-800 p-6 rounded-2xl text-left hover:border-slate-600 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40 transition-all duration-300 overflow-hidden">
+    <div className="group relative bg-white dark:bg-slate-800/60 border border-slate-800 p-6 rounded-2xl text-left hover:border-slate-600 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40 transition-all duration-300 overflow-hidden">
       {/* colored top line */}
       <div className={`absolute top-0 left-0 right-0 h-px bg-gradient-to-r ${accent} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
       <div className="w-11 h-11 rounded-xl bg-slate-800/80 flex items-center justify-center mb-4 border border-slate-700/50 group-hover:bg-slate-800 transition-colors">

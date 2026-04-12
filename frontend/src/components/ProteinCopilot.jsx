@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Send, Bot, User, Sparkles, Copy, Check } from "lucide-react";
-import { proteiaApi } from "../api/proteiaApi";
+import { micafoldApi } from "../api/micafoldApi";
 import ReactMarkdown from "react-markdown";
 
 /* Streams `fullText` into `onChunk(partial)` then calls `onDone`.
@@ -31,7 +31,7 @@ function CopyButton({ text }) {
   return (
     <button
       onClick={copy}
-      className="self-start flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors opacity-0 group-hover/msg:opacity-100"
+      className="self-start flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 opacity-0 group-hover/msg:opacity-100 transition-all duration-200 ease-in-out active:scale-[0.98]"
     >
       {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
       {copied ? "Copiado" : "Copiar"}
@@ -71,12 +71,12 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
             paeMatrix: cesga.structural_data?.confidence?.pae_matrix || statusData?.paeMatrix,
             plddtHistogram: cesga.structural_data?.confidence?.plddt_histogram || statusData?.plddtHistogram,
           };
-          console.log("✅ ProteinCopilot: datos COMPLETOS cargados", full);
+          console.log(" ProteinCopilot: datos COMPLETOS cargados", full);
           setEnrichedData(full);
         }
       } catch (err) {
-        console.error("❌ ProteinCopilot: error cargando datos:", err);
-        console.log("⚠️  usando statusData de fallback:", statusData);
+        console.error(" ProteinCopilot: error cargando datos:", err);
+        console.log("️  usando statusData de fallback:", statusData);
         setEnrichedData(statusData);
       }
     })();
@@ -131,7 +131,7 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
     (async () => {
       setIsWaiting(true);
       console.log("ProteinCopilot: generando resumen con enrichedData:", enrichedData);
-      const summary = await proteiaApi.getInitialSummary(jobId, proteinName, enrichedData);
+      const summary = await micafoldApi.getInitialSummary(jobId, proteinName, enrichedData);
       if (cancelled) return;
       setIsWaiting(false);
       if (onSummaryReady) onSummaryReady(summary);
@@ -150,8 +150,8 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
     setMessages(prev => [...prev, { role: "user", text: userMsg }]);
 
     setIsWaiting(true);
-    console.log("📤 ProteinCopilot enviando mensaje con enrichedData:", enrichedData);
-    const aiResponse = await proteiaApi.sendChatMessage(jobId, userMsg, messages, enrichedData || statusData);
+    console.log(" ProteinCopilot enviando mensaje con enrichedData:", enrichedData);
+    const aiResponse = await micafoldApi.sendChatMessage(jobId, userMsg, messages, enrichedData || statusData);
     setIsWaiting(false);
     startStream(aiResponse);
   };
@@ -168,7 +168,7 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold dark:text-white">ProteIA</h3>
+            <h3 className="text-sm font-bold dark:text-white">MicaFold</h3>
             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Asistente de análisis estructural</p>
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function ProteinCopilot({ jobId, proteinName, statusData, onSumma
           <button
             type="submit"
             disabled={!input.trim() || busy}
-            className="absolute right-2 top-1.5 p-1.5 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-colors"
+            className="absolute right-2 top-1.5 p-1.5 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-all duration-200 ease-in-out active:scale-[0.98]"
           >
             <Send className="w-4 h-4" />
           </button>

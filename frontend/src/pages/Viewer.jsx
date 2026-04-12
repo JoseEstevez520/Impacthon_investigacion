@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Download, X, Maximize2, FileText, Loader2, Dna, ArrowRight, FlaskConical, AlertTriangle, RefreshCw } from "lucide-react";
-import { proteiaApi } from "../api/proteiaApi";
+import { micafoldApi } from "../api/micafoldApi";
 import { getJobOutputs } from "../lib/outputsCache";
 import "pdbe-molstar/build/pdbe-molstar-light.css";
 import PAEHeatmap from "../components/PAEHeatmap";
@@ -75,6 +75,13 @@ export default function Viewer() {
           visualStyle: smartMode
         }, true);
       }
+
+      // Al cambiar la representación, pdbe-molstar reconstruye los componentes gráficamente
+      // dejándolos visibles por defecto. Como luchar contra el repintado de la GPU genera
+      // desincronizaciones, la solución más limpia es reiniciar nuestros selectores 
+      // visuales para que coincidan con la realidad de la pantalla (todo encendido).
+      setActiveComponents(prev => prev.map(c => ({ ...c, visible: true })));
+
     } catch (e) {
       console.warn("No se pudo aplicar el modo visual", e);
     }
@@ -145,7 +152,7 @@ export default function Viewer() {
   // Pre-carga del resumen IA en cuanto llegan los datos del job (no esperar al clic)
   useEffect(() => {
     if (!jobId || !jobData || aiSummary) return;
-    proteiaApi.getInitialSummary(jobId, jobData.name, jobData)
+    micafoldApi.getInitialSummary(jobId, jobData.name, jobData)
       .then(setAiSummary)
       .catch(() => { /* Silenciado intencionadamente si la IA no está respondiendo */ });
   }, [jobId, jobData, aiSummary]);
@@ -156,7 +163,7 @@ export default function Viewer() {
     if (!summary) {
       setWaitingForAi(true);
       try {
-        summary = await proteiaApi.getInitialSummary(jobId, jobData.name, jobData);
+        summary = await micafoldApi.getInitialSummary(jobId, jobData.name, jobData);
         setAiSummary(summary);
       } finally {
         setWaitingForAi(false);
@@ -180,7 +187,7 @@ export default function Viewer() {
     }
 
     const plddt = jobData?.plddt ?? 0;
-    const plddtConf = plddt >= 90 ? "MUY ALTA ✦" : plddt >= 70 ? "ALTA" : plddt >= 50 ? "BAJA" : "MUY BAJA";
+    const plddtConf = plddt >= 90 ? "MUY ALTA " : plddt >= 70 ? "ALTA" : plddt >= 50 ? "BAJA" : "MUY BAJA";
     const plddtColor = plddt >= 90 ? "#059669" : plddt >= 70 ? "#0284c7" : plddt >= 50 ? "#d97706" : "#dc2626";
     const plddtDesc = plddt >= 90
       ? "La forma global es muy fiable. Adecuada para estudios de docking y diseño racional."
@@ -191,6 +198,9 @@ export default function Viewer() {
     const bio = jobData?.biological;
     const solScore = bio?.solubility_score;
     const instIdx = bio?.instability_index;
+    const toxAlerts = bio?.toxicity_alerts;
+    const allerAlerts = bio?.allergenicity_alerts;
+    const secStruct = bio?.secondary_structure_prediction;
     const solLabel = solScore == null ? null
       : solScore >= 70 ? "Alta — apta para uso en laboratorio"
         : solScore >= 40 ? "Media — puede requerir optimización"
@@ -227,7 +237,7 @@ export default function Viewer() {
         </figure>` : ""}
       </div>` : "";
 
-    const bioHtml = (solScore != null || instIdx != null) ? `
+    const bioHtml = (solScore != null || instIdx != null || toxAlerts?.length > 0 || allerAlerts?.length > 0 || secStruct) ? `
       <section>
         <h2>Propiedades Biológicas</h2>
         <div class="bio-grid">
@@ -245,13 +255,48 @@ export default function Viewer() {
             <div class="bio-badge" style="background:${instIdx < 40 ? "#d1fae5" : "#fee2e2"};color:${instIdx < 40 ? "#065f46" : "#991b1b"}">${stabLabel}</div>
           </div>` : ""}
         </div>
+        ${(toxAlerts?.length > 0 || allerAlerts?.length > 0) ? `
+          <div style="margin-top: 12px; display: grid; gap: 8px;">
+            ${toxAlerts?.length > 0 ? `
+              <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 10px; border-radius: 8px;">
+                <div style="color: #dc2626; font-size: 9pt; font-weight: 700; text-transform: uppercase;">Toxicidad (In-silico)</div>
+                <ul style="margin: 4px 0 0 16px; font-size: 8.5pt; color: #991b1b;">
+                  ${toxAlerts.map(t => `<li>${t}</li>`).join("")}
+                </ul>
+              </div>
+            ` : ""}
+            ${allerAlerts?.length > 0 ? `
+              <div style="background: #fff7ed; border: 1px solid #fed7aa; padding: 10px; border-radius: 8px;">
+                <div style="color: #ea580c; font-size: 9pt; font-weight: 700; text-transform: uppercase;">Potencial Alergénico</div>
+                <ul style="margin: 4px 0 0 16px; font-size: 8.5pt; color: #9a3412;">
+                  ${allerAlerts.map(a => `<li>${a}</li>`).join("")}
+                </ul>
+              </div>
+            ` : ""}
+          </div>
+        ` : ""}
+        ${secStruct ? `
+          <div style="margin-top: 12px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px;">
+            <div style="font-size: 9pt; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Estructura Secundaria</div>
+            <div style="display: flex; height: 10px; border-radius: 99px; overflow: hidden; margin-bottom: 6px;">
+              <div style="width: ${secStruct.helix_percent}%; background: #6366f1;"></div>
+              <div style="width: ${secStruct.strand_percent}%; background: #10b981;"></div>
+              <div style="width: ${secStruct.coil_percent}%; background: #cbd5e1;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 8pt; font-weight: 600;">
+              <span style="color: #4f46e5;">α-hélice: ${secStruct.helix_percent}%</span>
+              <span style="color: #059669;">β-lámina: ${secStruct.strand_percent}%</span>
+              <span style="color: #64748b;">Coil: ${secStruct.coil_percent}%</span>
+            </div>
+          </div>
+        ` : ""}
       </section>` : "";
 
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>LocalFold — ${jobData?.name || "Informe"}</title>
+<title>MicaFold — ${jobData?.name || "Informe"}</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   @page { size: A4; margin: 0; }
@@ -300,7 +345,7 @@ export default function Viewer() {
   .plddt-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 9pt; font-weight: 700; color: white; }
   .plddt-desc { font-size: 9pt; color: #475569; margin-top: 4px; }
   .plddt-bar-track { height: 8px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-top: 8px; }
-  .plddt-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 40%, #3b82f6 70%, #1d4ed8 100%); }
+  .plddt-bar-fill { height: 100%; border-radius: 99px; background-image: linear-gradient(90deg, #ef4444 0px, #f59e0b 35%, #3b82f6 65%, #1d4ed8 100%); }
 
   /* BIO GRID */
   .bio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -333,7 +378,7 @@ export default function Viewer() {
 </div>
 
 <div class="header">
-  <div class="header-brand">🧬 LocalFold<span>Informe de Predicción Estructural</span></div>
+  <div class="header-brand"> MicaFold<span>Informe de Predicción Estructural</span></div>
   <div class="header-date">Impacthon 2026 · CESGA FinisTerrae III<br>${new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })}</div>
 </div>
 
@@ -354,19 +399,19 @@ ${imagesHtml}
       <div class="plddt-desc">${plddtDesc}</div>
     </div>
   </div>
-  <div class="plddt-bar-track"><div class="plddt-bar-fill" style="width:${plddt}%"></div></div>
+  <div class="plddt-bar-track"><div class="plddt-bar-fill" style="width:${plddt}%; background-size: ${100 * (100 / Math.max(plddt, 1))}% 100%;"></div></div>
 </section>
 
 ${bioHtml}
 
 <section>
-  <h2>Análisis IA — Proteia (Gemini 1.5 Pro via n8n)</h2>
+  <h2>Análisis IA — MicaFold (Gemini 1.5 Pro via n8n)</h2>
   <div class="ai-summary"><p>${summaryHtml}</p></div>
 </section>
 
 <div class="footer">
-  <div class="footer-brand">🧬 LocalFold</div>
-  <div class="footer-note">Los resultados son predicciones computacionales generadas por AlphaFold 2. No constituyen diagnóstico clínico ni asesoramiento médico.</div>
+  <div class="footer-brand"> MicaFold</div>
+  <div class="footer-note">Los resultados son predicciones computacionales generadas por nuestro sistema 2. No constituyen diagnóstico clínico ni asesoramiento médico.</div>
 </div>
 
 </body>
@@ -494,15 +539,21 @@ ${bioHtml}
               carbs: "ball-and-stick",
               nonStandard: "ball-and-stick"
             },
-            // Keep AF specific parsing for the Blue->Red B-factor scale
+            // Según la documentación técnica, siempre debemos forzar alphafoldView: true
+            // para que Molstar pinte los B-factors usando la rampa de color de pLDDT
+            // (Dark Blue > 90, Light Blue 70-90, Yellow 50-70, Orange < 50).
             alphafoldView: true,
           };
 
           const isCif = data.pdbFileUrl && (data.pdbFileUrl.includes("_entry.id") || data.pdbFileUrl.includes("loop_"));
           if (customUrl) {
             options.customData = { url: customUrl, format: isCif ? 'cif' : 'pdb' };
+          } else if (data.uniprot) {
+            options.customData = { url: `https://alphafold.ebi.ac.uk/files/AF-${data.uniprot}-F1-model_v4.cif`, format: 'cif' };
           } else {
-            options.moleculeId = "1cbs"; // Example default molecule
+            // Fallback to a real nuestro sistema model (p53) instead of an experimental PDB like 1cbs,
+            // so that the B-factors mapped to pLDDT color properly (blue/yellow/orange).
+            options.customData = { url: "https://alphafold.ebi.ac.uk/files/AF-P04637-F1-model_v4.cif", format: "cif" };
           }
 
           viewerInstance.render(viewerContainerRef.current, options);
@@ -579,8 +630,12 @@ ${bioHtml}
   const plddtConf = plddt >= 90 ? "Muy alta" : plddt >= 70 ? "Alta" : plddt >= 50 ? "Baja" : "Muy baja";
   const plddtColor = plddt >= 90 ? "text-blue-600 dark:text-blue-400" : plddt >= 70 ? "text-sky-500 dark:text-sky-400" : plddt >= 50 ? "text-amber-500" : "text-orange-500";
   const plddtBg = plddt >= 90 ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" : plddt >= 70 ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800" : plddt >= 50 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" : "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800";
-  const solScore = jobData?.biological?.solubility_score;
-  const instIdx = jobData?.biological?.instability_index;
+  const bio = jobData?.biological;
+  const solScore = bio?.solubility_score;
+  const instIdx = bio?.instability_index;
+  const toxAlerts = bio?.toxicity_alerts;
+  const allerAlerts = bio?.allergenicity_alerts;
+  const secStruct = bio?.secondary_structure_prediction;
 
   /* ── Empty state: no job selected ── */
   if (!jobId) {
@@ -605,7 +660,7 @@ ${bioHtml}
           </a>
           <a
             href="/app/submit"
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
             <FlaskConical className="w-3.5 h-3.5" />
             Nueva predicción
@@ -674,7 +729,7 @@ ${bioHtml}
             </div>
             <button
               onClick={() => { setFetchError(false); setJobData(null); setIsLoaded(false); setRetryKey(k => k + 1); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Reintentar
@@ -701,7 +756,7 @@ ${bioHtml}
 
         {/* Tabs */}
         {!fetchError && <div className="flex border-b border-slate-100 dark:border-slate-800 shrink-0">
-          {[["details", "Estructura"], ["copilot", "Proteia"], ["vista", "Vista"]].map(([key, label]) => (
+          {[["details", "Estructura"], ["vista", "Vista"], ["copilot", "MicaFold"]].map(([key, label]) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
@@ -740,15 +795,15 @@ ${bioHtml}
                     className="h-full rounded-full transition-all"
                     style={{
                       width: `${plddt}%`,
-                      background: "linear-gradient(90deg,#FF7D45 0%,#FFDB13 35%,#65CBF3 65%,#0053D6 100%)"
+                      backgroundImage: "linear-gradient(90deg, #FF7D45 0px, #FFDB13 35%, #65CBF3 65%, #0053D6 100%)",
+                      backgroundSize: `${100 * (100 / Math.max(plddt, 1))}% 100%`
                     }}
                   />
                 </div>
-                <div className="flex justify-between mt-1.5">
-                  {[["#FF7D45", "< 50"], ["#FFDB13", "50"], ["#65CBF3", "70"], ["#0053D6", "90+"]].map(([c, l]) => (
-                    <div key={l} className="flex items-center gap-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c }} />
-                      <span className="text-[8px] text-slate-400 dark:text-slate-500 font-mono">{l}</span>
+                <div className="flex w-full gap-0.5 mt-2.5 h-4 rounded-sm overflow-hidden">
+                  {[["#FF7D45", "< 50", "text-orange-950"], ["#FFDB13", "50", "text-yellow-950"], ["#65CBF3", "70", "text-sky-950"], ["#0053D6", "90+", "text-white"]].map(([c, l, tClass]) => (
+                    <div key={l} className="flex-1 flex items-center justify-center" style={{ background: c }}>
+                      <span className={`text-[9px] font-bold ${tClass}`}>{l}</span>
                     </div>
                   ))}
                 </div>
@@ -789,6 +844,55 @@ ${bioHtml}
                 </div>
               )}
 
+              {/* Toxicity & Allergenicity Warnings */}
+              {(toxAlerts?.length > 0 || allerAlerts?.length > 0) && (
+                <div className="flex flex-col gap-2">
+                  {toxAlerts?.length > 0 && (
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Toxicidad (In-silico)</span>
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
+                      </div>
+                      <div className="space-y-1.5 mt-1">
+                        {toxAlerts.map((t, i) => (
+                          <span key={i} className="text-xs font-medium px-2 py-1 rounded bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 inline-block w-full">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {allerAlerts?.length > 0 && (
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Potencial Alergénico</span>
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+                      </div>
+                      <div className="space-y-1.5 mt-1">
+                        {allerAlerts.map((a, i) => (
+                          <span key={i} className="text-xs font-medium px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 inline-block w-full">{a}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Secondary Structure */}
+              {secStruct && (
+                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estructura Secundaria</p>
+                  <div className="flex w-full h-2 rounded-full overflow-hidden">
+                    <div style={{ width: `${secStruct.helix_percent}%` }} className="bg-indigo-500" title={`Hélice: ${secStruct.helix_percent}%`} />
+                    <div style={{ width: `${secStruct.strand_percent}%` }} className="bg-emerald-500" title={`Lámina: ${secStruct.strand_percent}%`} />
+                    <div style={{ width: `${secStruct.coil_percent}%` }} className="bg-slate-300 dark:bg-slate-600" title={`Coil: ${secStruct.coil_percent}%`} />
+                  </div>
+                  <div className="flex justify-between text-[10px] font-medium">
+                    <span className="text-indigo-600 dark:text-indigo-400">α-hélice: {secStruct.helix_percent}%</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">β-lámina: {secStruct.strand_percent}%</span>
+                    <span className="text-slate-500 dark:text-slate-400">Coil (bucle): {secStruct.coil_percent}%</span>
+                  </div>
+                </div>
+              )}
+
               {/* PAE Heatmap */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -824,11 +928,11 @@ ${bioHtml}
                 <button
                   onClick={handleDownloadReport}
                   disabled={!jobData || waitingForAi}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-md bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+                  className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-md bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all duration-200 ease-in-out active:scale-[0.98]"
                 >
                   {waitingForAi
                     ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Esperando análisis IA…</>
-                    : <><FileText className="w-3.5 h-3.5" /> {aiSummary ? "Generar informe PDF ✓" : "Generar informe PDF"}</>}
+                    : <><FileText className="w-3.5 h-3.5" /> {aiSummary ? "Generar informe PDF " : "Generar informe PDF"}</>}
                 </button>
 
                 <div className="flex gap-1.5">
@@ -841,7 +945,7 @@ ${bioHtml}
                       key={label}
                       onClick={onClick}
                       disabled={disabled}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 ease-in-out active:scale-[0.98]"
                     >
                       <Download className="w-3 h-3" />
                       {label}
@@ -907,7 +1011,7 @@ ${bioHtml}
                     <button
                       key={style.id}
                       onClick={() => applyVisualMode(style.id)}
-                      className={`py-2 px-3 text-xs font-medium rounded-md border transition-all ${visualMode === style.id ? "bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:border-primary-800/50" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700/70"}`}
+                      className={`py-2 px-3 text-xs font-medium rounded-md border transition-all ${visualMode === style.id ? "bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:border-primary-800/50" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700/70"}`}
                     >
                       {style.label}
                     </button>

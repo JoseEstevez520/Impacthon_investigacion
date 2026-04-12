@@ -1,5 +1,5 @@
-const PROTEIA_CHAT_URL    = "https://n8n-n8n.yaqvsc.easypanel.host/webhook/protein-chat";
-const PROTEIA_SUMMARY_URL = "https://n8n-n8n.yaqvsc.easypanel.host/webhook/protein-summary";
+const MICAFOLD_CHAT_URL    = "https://n8n-n8n.yaqvsc.easypanel.host/webhook/protein-chat";
+const MICAFOLD_SUMMARY_URL = "https://n8n-n8n.yaqvsc.easypanel.host/webhook/protein-summary";
 
 function buildMetricsPayload(statusData) {
   if (!statusData) return {};
@@ -25,13 +25,13 @@ function buildMetricsPayload(statusData) {
   };
 }
 
-export const proteiaApi = {
+export const micafoldApi = {
   async getInitialSummary(jobId, proteinName, statusData) {
     try {
       const metrics = buildMetricsPayload(statusData);
       const contextSummary = `Proteína: ${proteinName}\nOrganismo: ${metrics.organism || "N/A"}\npLDDT: ${metrics.plddt || "N/A"}\nUniProt: ${metrics.uniprot || "N/A"}`;
       
-      const response = await fetch(PROTEIA_SUMMARY_URL, {
+      const response = await fetch(MICAFOLD_SUMMARY_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -45,8 +45,8 @@ export const proteiaApi = {
       const data = await response.json();
       return data.output || data.response || "No se pudo generar un resumen automático.";
     } catch (error) {
-      console.error("ProteIA summary error:", error);
-      return "Hubo un problema al conectar con ProteIA.";
+      console.error("MicaFold summary error:", error);
+      return "Hubo un problema al conectar con MicaFold.";
     }
   },
 
@@ -78,19 +78,19 @@ export const proteiaApi = {
         },
       };
 
-      console.log("ProteIA API enviando payload:", payload);
+      console.log("MicaFold API enviando payload:", payload);
 
-      const response = await fetch(PROTEIA_CHAT_URL, {
+      const response = await fetch(MICAFOLD_CHAT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      return data.output || data.response || "No obtuve respuesta de ProteIA.";
+      return data.output || data.response || "No obtuve respuesta de MicaFold.";
     } catch (error) {
-      console.error("ProteIA chat error:", error);
-      return "No pude conectar con ProteIA. Comprueba que el webhook está activo.";
+      console.error("MicaFold chat error:", error);
+      return "No pude conectar con MicaFold. Comprueba que el webhook está activo.";
     }
   },
 };
