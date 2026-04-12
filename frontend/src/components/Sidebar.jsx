@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import logoUrl from "../assets/logo.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Activity, Dna, LayoutDashboard, Sun, Moon, FolderOpen, Mail, ChevronLeft, ChevronRight, BrainCircuit, HelpCircle, Settings } from "lucide-react";
+import { Activity, Dna, LayoutDashboard, Sun, Moon, FolderOpen, Mail, ChevronLeft, ChevronRight, BrainCircuit, HelpCircle, Settings, Beaker } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { db, auth } from "../lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
@@ -43,6 +43,7 @@ export default function Sidebar() {
     { name: "Mis Trabajos", path: "/app/jobs", icon: <LayoutDashboard className="w-5 h-5" />, id: "jobs-link" },
     { name: "Proyectos", path: "/app/projects", icon: <FolderOpen className="w-5 h-5" />, badge: pendingInvites, id: "projects-list" },
     { name: "MicaFold", path: "/app/assistant", icon: <BrainCircuit className="w-5 h-5" />, id: "assistant-link" },
+    { name: "Labs", path: "/app/labs", icon: <Beaker className="w-5 h-5" />, id: "labs-link" },
   ];
 
   const initials = user?.displayName
