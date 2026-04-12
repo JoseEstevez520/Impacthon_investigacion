@@ -19,7 +19,19 @@ export default function Viewer() {
   const [downloadingLogs, setDownloadingLogs] = useState(false);
   const [aiSummary, setAiSummary] = useState(null);
   const [waitingForAi, setWaitingForAi] = useState(false);
+  const [profileType, setProfileType] = useState('researcher');
   const paeReportRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      window.addEventListener('storage', () => { /* listen for future changes if any */ });
+      const raw = localStorage.getItem("omicafold_profile");
+      if (raw) {
+        const { type } = JSON.parse(raw);
+        if (type) setProfileType(type);
+      }
+    } catch { /* ignore */ }
+  }, []);
   const [panelWidth, setPanelWidth] = useState(300);
   const [fetchError, setFetchError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -776,10 +788,49 @@ ${bioHtml}
           {activeTab === "details" && (
             <div className="p-4 space-y-4">
 
+              {/* PAE Heatmap */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    {profileType === 'student' ? 'Error Relativo (PAE)' : 'Matriz PAE'}
+                  </span>
+                  {jobData?.paeMatrix && (
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="flex items-center gap-1 text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+                    >
+                      <Maximize2 className="w-3 h-3" /> Ampliar
+                    </button>
+                  )}
+                </div>
+                {profileType === 'student' && jobData?.paeMatrix && (
+                   <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">
+                     Zonas oscuras indican regiones que mantienen una posición fija entre sí (dominios bien formados).
+                   </p>
+                )}
+                {jobData?.paeMatrix ? (
+                  <div
+                    className="relative group cursor-pointer rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700"
+                    onClick={() => setIsModalOpen(true)}
+                  >
+                    <PAEHeatmap ref={paeReportRef} matrix={jobData.paeMatrix} className="w-full h-[200px]" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <Maximize2 className="w-5 h-5 text-white drop-shadow-md" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 h-20 flex items-center justify-center">
+                    <span className="text-[11px] text-slate-400">No disponible para este job</span>
+                  </div>
+                )}
+              </div>
+
               {/* pLDDT score */}
               <div className={`rounded-lg border p-3 ${plddtBg}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">pLDDT</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {profileType === 'student' ? 'Nivel de Confianza (pLDDT)' : 'pLDDT'}
+                  </span>
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${plddtBg} ${plddtColor}`}>
                     {plddtConf}
                   </span>
@@ -790,6 +841,11 @@ ${bioHtml}
                   </span>
                   <span className="text-xs text-slate-400 mb-0.5">/ 100</span>
                 </div>
+                {profileType === 'student' && (
+                  <p className="text-[10px] text-slate-600 dark:text-slate-300 mt-2 mb-1 leading-relaxed">
+                    Mide la probabilidad de que la estructura sea correcta estructuralmente a nivel local (residuos).
+                  </p>
+                )}
                 <div className="mt-2.5 h-1.5 w-full rounded-full overflow-hidden bg-black/10 dark:bg-white/10">
                   <div
                     className="h-full rounded-full transition-all"
@@ -814,11 +870,18 @@ ${bioHtml}
                 <div className="grid grid-cols-2 gap-2">
                   {solScore != null && (
                     <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
-                      <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Solubilidad</p>
+                      <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                        {profileType === 'student' ? 'Solubilidad (Laboratorio)' : 'Solubilidad'}
+                      </p>
                       <p className={`text-xl font-bold tabular-nums ${solScore >= 70 ? "text-emerald-600 dark:text-emerald-400" : solScore >= 40 ? "text-amber-500" : "text-red-500"}`}>
                         {solScore.toFixed(0)}
                         <span className="text-xs font-normal text-slate-400 ml-0.5">/100</span>
                       </p>
+                      {profileType === 'student' && (
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 mb-1.5 leading-snug">
+                          {solScore >= 70 ? 'Fácil de purificar; no precipita.' : 'Puede ser difícil de aislar (precipitación posible).'}
+                        </p>
+                      )}
                       <div className="mt-1.5 h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                         <div
                           className="h-full rounded-full"
@@ -832,13 +895,20 @@ ${bioHtml}
                   )}
                   {instIdx != null && (
                     <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
-                      <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Inestabilidad</p>
+                      <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                        {profileType === 'student' ? 'Estabilidad en Tubo' : 'Inestabilidad'}
+                      </p>
                       <p className={`text-xl font-bold tabular-nums ${instIdx < 40 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
                         {instIdx.toFixed(1)}
                       </p>
                       <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded mt-1.5 inline-block ${instIdx < 40 ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"}`}>
                         {instIdx < 40 ? "Estable" : "Inestable"}
                       </span>
+                      {profileType === 'student' && (
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-snug">
+                          {instIdx < 40 ? 'Soportará manipulación antes de degradarse.' : 'Se degradará rápidamente in-vitro.'}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -893,35 +963,7 @@ ${bioHtml}
                 </div>
               )}
 
-              {/* PAE Heatmap */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Matriz PAE</span>
-                  {jobData?.paeMatrix && (
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="flex items-center gap-1 text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:underline"
-                    >
-                      <Maximize2 className="w-3 h-3" /> Ampliar
-                    </button>
-                  )}
-                </div>
-                {jobData?.paeMatrix ? (
-                  <div
-                    className="relative group cursor-pointer rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700"
-                    onClick={() => setIsModalOpen(true)}
-                  >
-                    <PAEHeatmap ref={paeReportRef} matrix={jobData.paeMatrix} className="w-full h-[200px]" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <Maximize2 className="w-5 h-5 text-white drop-shadow-md" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 h-20 flex items-center justify-center">
-                    <span className="text-[11px] text-slate-400">No disponible para este job</span>
-                  </div>
-                )}
-              </div>
+
 
               {/* Downloads footer - Only in Details tab */}
               <div className="pt-2 space-y-2 border-t border-slate-100 dark:border-slate-800 mt-4">
