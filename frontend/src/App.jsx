@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./lib/firebase"; // <-- Instancia Firebase Client globalmente
+import { TutorialProvider } from "./contexts/TutorialContext";
+import TutorialOverlay from "./components/TutorialOverlay";
 import Layout from "./components/Layout";
 import Viewer from "./pages/Viewer";
 import SubmitFasta from "./pages/SubmitFasta";
@@ -7,10 +9,13 @@ import JobsList from "./pages/JobsList";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import RAGAssistant from "./pages/RAGAssistant";
+import Settings from "./pages/Settings";
 import Landing from "./pages/Landing";
 
 function App() {
   return (
+    <TutorialProvider>
+      <TutorialOverlay />
     <BrowserRouter>
       <Routes>
         {/* Pórtico comercial bloqueador */}
@@ -24,9 +29,11 @@ function App() {
           <Route path="projects" element={<Projects />} />
           <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="assistant" element={<RAGAssistant />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>
+    </TutorialProvider>
   );
 }
 

@@ -1,6 +1,45 @@
 const MICAFOLD_CHAT_URL    = "https://n8n-n8n.yaqvsc.easypanel.host/webhook/protein-chat";
 const MICAFOLD_SUMMARY_URL = "https://n8n-n8n.yaqvsc.easypanel.host/webhook/protein-summary";
 
+const PROFILE_INSTRUCTIONS = {
+  researcher: {
+    understand: "El usuario es un investigador en biología molecular sin experiencia en HPC. Usa lenguaje biológico accesible, evita jerga técnica de computación y prioriza las implicaciones funcionales.",
+    binding:    "El usuario es un investigador buscando sitios de unión. Destaca regiones conservadas, cavidades hidrofóbicas y posibles interfaces proteína-ligando.",
+    validate:   "El usuario valida resultados experimentales. Conecta las predicciones estructurales con lo observable en gel, western blot o cristalografía.",
+  },
+  clinical: {
+    understand: "El usuario es un investigador clínico. Relaciona la estructura con enfermedades conocidas y relevancia terapéutica. Evita jerga computacional.",
+    binding:    "El usuario clínico busca dianas terapéuticas. Prioriza druggability, toxicidad potencial y relevancia para enfermedad.",
+    validate:   "El usuario clínico valida datos. Enfoca en concordancia con literatura médica y significado clínico de las regiones de baja confianza.",
+  },
+  drug: {
+    understand: "El usuario trabaja en drug discovery. Destaca propiedades ADMET, estabilidad, solubilidad y características que afectan al desarrollo de fármacos.",
+    binding:    "El usuario busca sitios de unión para drug discovery. Prioriza binding pockets, accesibilidad del solvente y comparación con dianas conocidas.",
+    validate:   "El usuario valida candidatos farmacológicos. Analiza solubilidad, índice de inestabilidad, alertas de toxicidad y viabilidad terapéutica.",
+  },
+  student: {
+    understand: "El usuario es estudiante aprendiendo sobre estructuras proteicas. Explica paso a paso, define los términos técnicos y adopta un tono pedagógico.",
+    binding:    "El usuario es estudiante interesado en interacciones proteína-ligando. Explica qué es un sitio de unión y cómo leer los datos de confianza.",
+    validate:   "El usuario es estudiante aprendiendo a interpretar resultados. Conecta la predicción computacional con experimentos de laboratorio.",
+  },
+};
+
+function getProfileContext() {
+  try {
+    const raw = localStorage.getItem("omicafold_profile");
+    if (!raw) return "";
+    const { type, goal, personalNote } = JSON.parse(raw);
+    const instruction = PROFILE_INSTRUCTIONS[type]?.[goal];
+    let context = instruction ? `\n\nPERFIL DEL USUARIO: ${instruction}` : "";
+    if (personalNote?.trim()) {
+      context += `\n\nCONTEXTO PERSONAL: "${personalNote.trim()}"`;
+    }
+    return context;
+  } catch {
+    return "";
+  }
+}
+
 function buildMetricsPayload(statusData) {
   if (!statusData) return {};
   return {
@@ -29,7 +68,7 @@ export const micafoldApi = {
   async getInitialSummary(jobId, proteinName, statusData) {
     try {
       const metrics = buildMetricsPayload(statusData);
-      const contextSummary = `Proteína: ${proteinName}\nOrganismo: ${metrics.organism || "N/A"}\npLDDT: ${metrics.plddt || "N/A"}\nUniProt: ${metrics.uniprot || "N/A"}`;
+      const contextSummary = `Proteína: ${proteinName}\nOrganismo: ${metrics.organism || "N/A"}\npLDDT: ${metrics.plddt || "N/A"}\nUniProt: ${metrics.uniprot || "N/A"}${getProfileContext()}`;
       
       const response = await fetch(MICAFOLD_SUMMARY_URL, {
         method: "POST",
@@ -53,7 +92,7 @@ export const micafoldApi = {
   async sendChatMessage(jobId, message, chatHistory = [], proteinContext = {}) {
     try {
       const bio = proteinContext.biological;
-      const contextSummary = `DATOS DE LA PROTEÍNA:\n- Nombre: ${proteinContext.name}\n- pLDDT: ${proteinContext.plddt}\n- Organismo: ${proteinContext.organism}\n- UniProt: ${proteinContext.uniprot}\n- Solubilidad: ${bio?.solubility_score}/100\n- Inestabilidad: ${bio?.instability_index}`;
+      const contextSummary = `DATOS DE LA PROTEÍNA:\n- Nombre: ${proteinContext.name}\n- pLDDT: ${proteinContext.plddt}\n- Organismo: ${proteinContext.organism}\n- UniProt: ${proteinContext.uniprot}\n- Solubilidad: ${bio?.solubility_score}/100\n- Inestabilidad: ${bio?.instability_index}${getProfileContext()}`;
 
       const payload = {
         session_id: `job_${jobId}`,
