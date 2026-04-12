@@ -31,10 +31,10 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 flex flex-col font-sans selection:bg-primary-500/30">
+    <div className="dark min-h-screen bg-slate-900 text-slate-50 flex flex-col font-sans selection:bg-primary-500/30">
 
       {/* Navbar */}
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-slate-50 dark:bg-white dark:bg-slate-800/80 backdrop-blur-md border-b border-white/5" : "bg-transparent"}`}>
+      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-slate-900/80 backdrop-blur-md border-b border-white/5" : "bg-transparent"}`}>
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src={logoUrl} className="w-8 h-8 object-contain" alt="MicaFold" />
@@ -93,7 +93,7 @@ export default function Landing() {
       {/* ── STACK ── */}
       <section className="py-10 px-4 border-y border-white/5">
         <div className="max-w-5xl mx-auto">
-          <p className="text-center text-[11px] text-slate-600 uppercase tracking-widest mb-6 font-medium">Construido sobre</p>
+          <p className="text-center text-[11px] text-slate-500 uppercase tracking-widest mb-6 font-medium">Construido sobre</p>
           <div className="flex flex-wrap justify-center items-center gap-3">
             {[
               { label: "CESGA FinisTerrae III", color: "border-blue-500/30 text-blue-300" },
@@ -174,7 +174,7 @@ export default function Landing() {
                 </p>
               </div>
               {/* Right: fake chat */}
-              <div className="w-full lg:w-[440px] shrink-0 rounded-2xl bg-slate-50 dark:bg-white dark:bg-slate-800/80 border border-white/10 overflow-hidden">
+              <div className="w-full lg:w-[440px] shrink-0 rounded-2xl bg-slate-800/80 border border-white/10 overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-white/5">
                   <BrainCircuit className="w-4 h-4 text-primary-400" />
                   <span className="text-xs font-semibold text-slate-300">MicaFold</span>
@@ -218,7 +218,7 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 flex flex-col sm:flex-row items-center justify-between gap-8">
           <div>
             <h2 className="text-2xl lg:text-3xl font-extrabold text-white mb-1">¿Listo para predecir tu primera proteína?</h2>
-            <p className="text-slate-900 dark:text-slate-500 text-sm">Sin instalaciones · Sin terminal · CESGA FinisTerrae III</p>
+            <p className="text-slate-400 text-sm">Sin instalaciones · Sin terminal · CESGA FinisTerrae III</p>
           </div>
           <button
             onClick={handleLogin}
@@ -236,10 +236,10 @@ export default function Landing() {
           <div className="flex items-center gap-2.5">
             <img src={logoUrl} className="w-6 h-6 object-contain" alt="MicaFold" />
             <span className="font-bold text-white text-sm">Omica<span className="text-primary-500">Fold</span></span>
-            <span className="text-slate-700 text-sm">—</span>
-            <span className="text-slate-900 dark:text-slate-500 text-xs">Predicción proteica en el navegador</span>
+            <span className="text-slate-600 text-sm">—</span>
+            <span className="text-slate-400 text-xs">Predicción proteica en el navegador</span>
           </div>
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 text-xs text-slate-600">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 text-xs text-slate-500">
             <span>Impacthon 2026</span>
             <span className="hidden sm:block w-px h-3 bg-slate-800" />
             <span>GDG Santiago de Compostela</span>
@@ -306,7 +306,7 @@ function MetricsSection() {
               >
                 {m.prefix}<MetricCard value={m.value} suffix={m.suffix} from={m.from} to={m.to} />
               </span>
-              <p className="text-sm text-slate-900 dark:text-slate-500 leading-snug max-w-[130px]">{m.label}</p>
+              <p className="text-sm text-slate-400 leading-snug max-w-[130px]">{m.label}</p>
             </div>
           ))}
         </div>
