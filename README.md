@@ -4,6 +4,8 @@
 [![Award](https://img.shields.io/badge/Award-🥈%202nd%20Place-gold?style=for-the-badge)](https://github.com/JoseEstevez520/Impacthon_investigacion)
 [![Target](https://img.shields.io/badge/Platform-CESGA%20HPC-brightgreen?style=for-the-badge)](https://www.cesga.es/)
 [![AI-Powered](https://img.shields.io/badge/Powered%20by-ProteIA-orange?style=for-the-badge)](https://github.com/JoseEstevez520/Impacthon_investigacion)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Firebase-ffca28?style=for-the-badge&logo=firebase)](https://impacthon-4c3bc.firebaseapp.com/)
+
 
 **Micafold** bridges the gap between high-performance computing and biological intuition. Developed during **Impacthon 2026**, it is an AI-augmented platform designed for researchers to fold, visualize, and interpret protein structures with the power of CESGA infrastructure.
 
