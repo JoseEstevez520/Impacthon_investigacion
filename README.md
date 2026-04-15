@@ -1,22 +1,26 @@
-# <img src="frontend/public/logo.png" width="45" height="45" align="center" style="margin-right: 15px;"> Micafold
+# <img src="frontend/public/logo.png" width="45" height="45" align="center" style="margin-right: 15px;"> Micafold — Por el Equipo Teis
 
 [![Hackathon](https://img.shields.io/badge/Impacthon-2026-blueviolet?style=for-the-badge)](https://github.com/JoseEstevez520/Impacthon_investigacion)
 [![Premio](https://img.shields.io/badge/Premio-🥈%202º%20Puesto-gold?style=for-the-badge)](https://github.com/JoseEstevez520/Impacthon_investigacion)
 [![Plataforma](https://img.shields.io/badge/Plataforma-CESGA%20HPC-brightgreen?style=for-the-badge)](https://www.cesga.es/)
-[![IA](https://img.shields.io/badge/Potenciado%20por-ProteIA-orange?style=for-the-badge)](https://github.com/JoseEstevez520/Impacthon_investigacion)
+[![IA](https://img.shields.io/badge/IA-ProteIA-orange?style=for-the-badge)](https://github.com/JoseEstevez520/Impacthon_investigacion)
 
-**Micafold** cierra la brecha entre la computación de alto rendimiento y la intuición biológica. Desarrollada durante la **Impacthon 2026**, es una plataforma aumentada con IA diseñada para que los investigadores puedan plegar, visualizar e interpretar estructuras de proteínas utilizando la potencia de la infraestructura del CESGA.
+**Micafold** no es solo una herramienta, es el centro de trabajo digital para el biólogo del futuro. Desarrollada por el **Equipo Teis** durante la **Impacthon 2026**, esta plataforma aprovecha la potencia del CESGA para transformar datos complejos en descubrimientos científicos accionables.
 
 ---
 
-## 🌟 La Visión: Personalización sin Frustración
+## 🌟 La Visión del Equipo Teis: Un Ecosistema, no una Herramienta
 
-La biología estructural suele estar frenada por flujos de trabajo basados en terminales y métricas crípticas. **Micafold** transforma esta experiencia en un viaje visual e intuitivo.
+Nuestra filosofía se basa en que la tecnología debe adaptarse al científico, y no al revés. En **Micafold**, la apuesta por la **personalización radical** comienza desde el primer contacto.
 
-> [!TIP]
-> **Nuestra apuesta**: La personalización total de la experiencia del usuario. Eliminamos la barrera de entrada técnica, ahorrando iteraciones innecesarias, tiempo y sobre todo la **frustración** habitual en el proceso de investigación bioinformática.
+### 🧬 Personalización Inteligente (Onboarding)
+A través de un proceso de onboarding diseñado para captar el perfil y las necesidades específicas del investigador, la plataforma se reconfigura para ahorrar iteraciones críticas y eliminar la frustración técnica. No entregamos una interfaz genérica; entregamos un espacio de trabajo a medida.
 
-Este proyecto democratiza el acceso a herramientas de vanguardia como **AlphaFold2**, permitiendo que los investigadores se centren en lo que realmente importa: el descubrimiento científico.
+### 🏢 Más que un Visor 3D: Una Plataforma Integral
+Micafold ha sido diseñado como un entorno completo para la investigación:
+*   **Organización**: Espacios de trabajo dedicados para gestionar múltiples proyectos de plegamiento.
+*   **Colaboración**: Herramientas integradas para compartir resultados y hallazgos con la comunidad científica.
+*   **Aprendizaje**: Recursos educativos dinámicos para que los investigadores puedan evolucionar junto con las herramientas de IA.
 
 ---
 
@@ -26,20 +30,20 @@ Micafold utiliza una arquitectura desacoplada para garantizar escalabilidad y se
 
 ```mermaid
 graph TD
-    User([🔬 Investigador]) -->|Envío de FASTA| React[React Frontend]
-    React -->|Persistencia| Firebase[(Cloud Firestore)]
-    React -->|Envío de Tarea| CESGA[HPC CESGA / Slurm]
+    User([🔬 Investigador]) -->|Onboarding & Perfil| React[Plataforma React]
+    React -->|Persistencia Proyectos| Firebase[(Cloud Firestore)]
+    React -->|Tarea de Plegamiento| CESGA[HPC CESGA / Slurm]
     
     subgraph "Nube de Cómputo"
-    CESGA -->|Ejecución| AF2[AlphaFold2 + GPUs]
-    AF2 -->|Resultados PDB/PAE| Storage[Almacenamiento]
+    CESGA -->|Ejecución AF2| AF2[AlphaFold2 + GPUs]
+    AF2 -->|Resultados Estructurales| Storage[Almacenamiento Seguro]
     end
     
-    Storage -->|Contexto de Datos| N8N{Orquestador n8n}
-    N8N -->|Ingeniería de Prompts| LLM[Modelo de Lenguaje]
-    LLM -->|Análisis Biológico| React
+    Storage -->|Contexto| N8N{Orquestador IA}
+    N8N -->|Generación de Insights| LLM[Modelo de Lenguaje]
+    LLM -->|Asesoría Personalizada| React
     
-    React -->|Visualización 3D| Viewer[3Dmol.js / Visual IQ]
+    React -->|Ecosistema Visual| Viewer[Visor 3D + Dashboard Colaborativo]
 ```
 
 ---
@@ -48,19 +52,14 @@ graph TD
 
 ### 🤖 ProteIA: Asistente de Investigación con IA
 Integrado en todo el flujo de trabajo para traducir datos en conocimiento biológico:
-- **Informes Inteligentes**: Genera automáticamente resúmenes científicos a partir de los resultados del plegamiento.
-- **Chat Contextual**: Pregunta a ProteIA sobre regiones específicas, mutaciones o implicaciones biológicas.
-- **Diagnóstico de Errores**: Traduce errores complejos de HPC/Slurm en consejos biológicos accionables.
+- **Informes a Medida**: Genera automáticamente resúmenes científicos adaptados al nivel de especialización del usuario.
+- **Chat Contextual**: Pregunta sobre regiones específicas, mutaciones o aplicaciones terapéuticas.
+- **Diagnóstico Humano**: Traduce errores complejos de infraestructura en consejos prácticos.
 
-### 🔬 Inteligencia Visual Científica
-- **Visor 3D Interactivo**: Renderizado de alta definición para estructuras PDB/mmCIF.
-- **Interpretación de Métricas**: Mapeo visual de pLDDT (confianza) y mapas de calor PAE traducidos a lenguaje natural.
-- **Exportación Rápida**: Descarga de informes listos para publicación y archivos estructurales.
-
-### ⚡ Nativo para HPC vía CESGA
-Integración directa con la infraestructura del **CESGA (Centro de Supercomputación de Galicia)**:
-- **Monitorización en Tiempo Real**: Seguimiento de estados (PENDING → RUNNING → COMPLETED) sin necesidad de SSH.
-- **Metadatos Enriquecidos**: Obtención automática de datos de UniProt, información de organismos y métricas experimentales.
+### 🔬 Inteligencia Visual y Colaborativa
+- **Visor 3D Interactivo**: Renderizado de alta definición integrado en el flujo de trabajo diario.
+- **Interpretación de Métricas**: Mapeo visual de confianza y matrices PAE explicadas en lenguaje natural.
+- **Centro de Exportación**: Descarga informes y estructuras optimizados para publicaciones científicas.
 
 ---
 
@@ -68,49 +67,28 @@ Integración directa con la infraestructura del **CESGA (Centro de Supercomputac
 
 | Capa | Tecnologías |
 | :--- | :--- |
-| **Frontend** | React 19, Vite, Tailwind CSS, Framer Motion |
-| **Visualización** | 3Dmol.js, Plotly.js (Heatmaps PAE) |
-| **Orquestación IA** | n8n (Flujos Agentic), LLMs especializados |
-| **Infraestructura** | CESGA HPC (AlphaFold2, Slurm), Firebase Firestore |
+| **Plataforma** | React 19, Vite, Tailwind CSS, Framer Motion |
+| **Visualización** | 3Dmol.js, Plotly.js |
+| **Inteligencia** | n8n (Flujos Agentic), LLMs |
+| **Infraestructura** | CESGA HPC, Slurm, Firebase Firestore |
 
 ---
 
 ## 📂 Estructura del Repositorio
 
-Para mantener el proyecto organizado, el repositorio se estructura de la siguiente manera:
-
-*   **`frontend/`**: Todo el código fuente de la aplicación cliente (React + Vite).
-*   **`docs/`**: Base de conocimientos completa del proyecto, incluyendo:
-    *   `investigacion/`: Análisis de mercado, usuarios y retos técnicos.
-    *   `presentacion/`: Materiales del pitch y estrategia de negocio.
-    *   `Documentacion/`: Guías de API y manuales técnicos.
-*   **Archivos de Configuración**: Firebase, Git y dependencias en la raíz.
+*   **`frontend/`**: Todo el código fuente de la plataforma cliente.
+*   **`docs/`**: Base de conocimientos completa del proyecto (Investigación, Pitch y Guías).
+*   **Raíz**: Configuraciones de despliegue y dependencias globales.
 
 ---
 
 ## 🚦 Primeros Pasos
 
-### Instalación
-1. **Clonar el repositorio**:
-   ```bash
-   git clone https://github.com/JoseEstevez520/Impacthon_investigacion.git
-   ```
-2. **Configurar el Frontend**:
-   ```bash
-   cd frontend
-   npm install
-   ```
-3. **Ejecutar en desarrollo**:
-   ```bash
-   npm run dev
-   ```
+1. **Clonar**: `git clone https://github.com/JoseEstevez520/Impacthon_investigacion.git`
+2. **Setup**: `cd frontend && npm install`
+3. **Despegue**: `npm run dev`
 
 ---
 
 ## 👥 Equipo
-Desarrollado con ❤️ por el **Micafold Team** durante la **Impacthon 2026** en el CESGA.
-
----
-
-## 📄 Notas Finales
-Este repositorio contiene tanto el código fuente como la documentación de investigación completa de la plataforma Micafold. El proyecto se mantiene como una prueba de concepto (PoC) del futuro de la biología estructural accesible en entornos de computación de alto rendimiento.
+Desarrollado con ❤️ por el **Equipo Teis** durante la **Impacthon 2026** en el CESGA.
